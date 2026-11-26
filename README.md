@@ -18,9 +18,9 @@ PostgreSQL (own database `openrms_rigs`), Hamlib (`rigctl`, catalog build only).
 > **Sibling checkouts needed (for now).** Clone these next to this repo, in the same parent folder:
 > - **openRMS-Accounts:** `api/` depends on `@openrms/service-auth` through
 >   `link:../../openRMS-Accounts/packages/service-auth`, so `pnpm install` fails without it.
-> - **openRMS-Spec:** the API reads the profile schema and OpenAPI document from it at startup and
->   **won't start without it**. Override the location with `OPENRMS_SPEC_DIR`. openRMS-Spec isn't
->   public yet.
+> - **openRMS-Spec** ([github.com/open-rms/openRMS-Spec](https://github.com/open-rms/openRMS-Spec)):
+>   the API reads the profile schema and OpenAPI document from it at startup and **won't start
+>   without it**. Override the location with `OPENRMS_SPEC_DIR`.
 
 ## Layout
 
