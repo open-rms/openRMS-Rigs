@@ -39,6 +39,7 @@
     <div class="flex items-center gap-2">
       {#if $me}
         <a href="/favorites" class="text-sm">♥ Favorites</a>
+        <a href="/account" class="text-sm">Account &amp; API keys</a>
         <a href="/account" class="no-underline"><Badge variant="secondary">{$me.callsign ?? "signed in"}</Badge></a>
         {#if $me.moderator}<a href="/account#queue" class="text-sm">Review queue</a>{/if}
       {:else}

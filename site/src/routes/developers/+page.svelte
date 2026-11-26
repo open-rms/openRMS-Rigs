@@ -18,6 +18,6 @@
     <div>POST {base}/validate (YAML or JSON body)</div><div>POST {base}/convert?to=yaml</div>
   </Card.Content></Card.Root>
   <Card.Root><Card.Header><Card.Title>Contribute from an app</Card.Title></Card.Header><Card.Content class="text-sm">
-    Sign in through openRMS Accounts (device flow for desktop apps), or mint an <code>ormsr_</code> key on your account page, and <code>POST {base}/profiles</code>.
+    Sign in through openRMS Accounts (device flow for desktop apps), or create an <code>ormsr_</code> key on your <a href="/account#keys">Account page</a>, and <code>POST {base}/profiles</code>.
   </Card.Content></Card.Root>
 </div>

@@ -78,7 +78,7 @@
     {:else}<p class="text-muted-foreground">Nothing waiting.</p>{/each}
   {/if}
 {:else}
-  <p class="mb-3">You're not signed in.</p>
+  <p class="mb-3">You're not signed in. Sign in to see your profiles and create API keys.</p>
   <Button href={signInUrl()}>Sign in with your openRMS account</Button>
 {/if}
 
