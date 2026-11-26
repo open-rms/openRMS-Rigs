@@ -34,7 +34,11 @@ export type Envelope = {
   /** Signed-in reader's own state (single profile responses). */
   viewer?: null | { favorite: boolean; starred: boolean; starred_at: string | null; report: { worked: boolean; revision: number } | null; owner: boolean };
 };
-export type PlanStep = { id: string; kind: string; name: string; safety: "rx" | "tx"; readable: boolean; check_only: boolean; rigctld: { get: string | null; set: string | null }; text: string; note?: string };
+export type PlanStep = {
+  id: string; kind: string; name: string; safety: "rx" | "tx"; readable: boolean; check_only: boolean; rigctld: { get: string | null; set: string | null };
+  text: string; note?: string; unit?: string; menu?: string[]; tolerance?: number;
+  cat?: { protocol: "ascii" | "civ"; read?: string; reply?: string; set?: string; set_command?: string };
+};
 export type Issue = { path: string; message: string };
 export type Comment = {
   id: number; parent_id: number | null; revision: number; author: { callsign: string | null }; body: string | null;

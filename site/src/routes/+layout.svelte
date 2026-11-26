@@ -24,7 +24,7 @@
   ];
 </script>
 
-<header class="bg-card mb-5 border-b">
+<header class="bg-card mb-5 border-b print:hidden">
   <div class="mx-auto flex min-h-14 max-w-[1200px] flex-wrap items-center gap-6 px-4">
     <a class="text-foreground flex items-center gap-2 text-[1.05rem] no-underline" href="/">
       <img src="/favicon.svg" alt="" width="26" height="26" />
@@ -54,7 +54,7 @@
   {@render children()}
 </main>
 
-<footer class="text-muted-foreground mx-auto max-w-[1200px] border-t px-4 py-6 text-sm">
+<footer class="text-muted-foreground mx-auto max-w-[1200px] border-t px-4 py-6 text-sm print:hidden">
   Profiles are community-contributed under CC-BY-SA-4.0. Capabilities come from Hamlib. Check ALC and audio levels yourself before transmitting.
   · <a href="/docs">API docs</a> · Part of <a href="https://openrms.dev">openRMS</a>
 </footer>

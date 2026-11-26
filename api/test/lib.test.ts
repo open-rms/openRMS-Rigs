@@ -217,3 +217,15 @@ describe("catalog quirks", () => {
   });
 });
 
+describe("menu path coverage", () => {
+  it("warns (not errors) when a hand-set step has no menu path", () => {
+    const p = clone(ex("ftdx10-ardop.yaml"));
+    p.steps.push({ id: "nb-x", kind: "func", name: "NB", value: false });
+    const v = validateProfile(p);
+    expect(v.ok).toBe(true);
+    expect(v.warnings.some((w) => w.path.endsWith("/menu") && w.message.includes("NB"))).toBe(true);
+    p.steps[p.steps.length - 1]!.menu = ["FUNC", "NB"];
+    expect(validateProfile(p).warnings.some((w) => w.message.includes("no menu path for NB"))).toBe(false);
+  });
+});
+

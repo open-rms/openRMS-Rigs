@@ -61,6 +61,10 @@ export function validateProfile(input: unknown): Result {
     if (seen.has(s.id)) errors.push({ path: at("/id"), message: `duplicate step id "${s.id}"` });
     seen.add(s.id);
     checkStep(s, at, errors, warnings, rig);
+    // Manual-first: people setting the radio by hand need to know where each setting is.
+    if ((s.kind === "level" || s.kind === "func" || s.kind === "parm" || s.kind === "cat") && !s.menu?.length) {
+      warnings.push({ path: at("/menu"), message: `no menu path for ${s.name}: people setting it by hand won't know where to find it` });
+    }
   });
 
   return { ok: errors.length === 0, profile: p, errors, warnings };
