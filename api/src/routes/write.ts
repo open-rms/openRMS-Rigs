@@ -6,6 +6,7 @@ import { isModerator, requireAuth, type AuthEnv, type Principal } from "../auth.
 import { accountsConfigured, accountsFetch, keysUrl } from "../lib/accounts.js";
 import { fail } from "../lib/http.js";
 import { findRig } from "../lib/catalog.js";
+import { exportAccount, NAME_RE } from "../lib/deletion.js";
 import { canSee, envelope, getProfile, initialStatus, isPublic, listProfiles, newId, publicWhere } from "../lib/profiles.js";
 import { parseProfileText, validateProfile } from "../lib/validate.js";
 import type { Context } from "hono";
@@ -201,6 +202,31 @@ writeRoutes.get("/me/radios", requireAuth({ tokenOnly: true }), async (c) => {
       return { model: r.model, hamlib_model: r.hamlib_model ?? rig?.model ?? null, label: r.label ?? null, primary: !!r.primary, mfg: rig?.mfg ?? null, name: rig?.name ?? null, profiles: counts.get(r.model) ?? 0 };
     }),
   });
+});
+
+// ---- account deletion preference and export (identity.md §4c) ----
+
+writeRoutes.get("/me/deletion-preference", requireAuth({ tokenOnly: true }), async (c) => {
+  const [pref] = await db.select().from(schema.accountPref).where(eq(schema.accountPref.sub, c.get("principal").sub)).limit(1);
+  c.header("Cache-Control", "private, no-store");
+  return c.json({ credit: pref?.deletionCredit ?? "deleted", name: pref?.deletionName ?? null });
+});
+
+writeRoutes.put("/me/deletion-preference", requireAuth({ tokenOnly: true }), async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { credit?: string; name?: string | null } | null;
+  if (!b || !["callsign", "deleted", "name"].includes(b.credit ?? "")) return fail(c, 400, "bad_request", 'send {"credit": "callsign"|"deleted"|"name", "name"?}');
+  const name = b.credit === "name" ? (b.name ?? "").trim().replace(/\s+/g, " ") : null;
+  if (b.credit === "name" && !NAME_RE.test(name!)) return fail(c, 400, "bad_request", "a name is 1–40 letters, digits, spaces and . , ' ( ) - /");
+  const sub = c.get("principal").sub;
+  await db.insert(schema.accountPref).values({ sub, deletionCredit: b.credit!, deletionName: name })
+    .onConflictDoUpdate({ target: schema.accountPref.sub, set: { deletionCredit: b.credit!, deletionName: name, updatedAt: new Date() } });
+  return c.json({ credit: b.credit, name });
+});
+
+writeRoutes.get("/me/export", requireAuth({ tokenOnly: true }), async (c) => {
+  c.header("Cache-Control", "private, no-store");
+  c.header("Content-Disposition", 'attachment; filename="openrms-rigs-export.json"');
+  return c.json(await exportAccount(c.get("principal").sub));
 });
 
 // ---- API keys: minted and managed at Accounts (identity.md §5); Rigs only lists them ----

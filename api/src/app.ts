@@ -13,6 +13,7 @@ import { pageRoutes } from "./routes/pages.js";
 import { schemaPath } from "./lib/validate.js";
 import { verifyWebhook } from "@openrms/service-auth";
 import { ingestor, KEY_SCOPES } from "./lib/keys.js";
+import { deleteAccount } from "./lib/deletion.js";
 
 const specPath = paths.openapi;
 
@@ -48,14 +49,20 @@ export function createApp() {
     openrms_key_scopes: KEY_SCOPES,
   }, 200, { "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" }));
 
-  // Accounts events (identity.md §7). Rigs acts on key.revoked; other events are acknowledged.
+  // Accounts events (identity.md §7). Rigs acts on key.revoked and user.deleted; other events are acknowledged.
   app.post("/api/v1/webhooks/accounts", async (c) => {
     if (!env.ACCOUNTS_WEBHOOK_SECRET) return c.json({ error: { code: "unavailable", message: "webhooks not configured" } }, 503);
     const raw = await c.req.text();
     let event;
     try { event = verifyWebhook(raw, c.req.header("openrms-signature"), env.ACCOUNTS_WEBHOOK_SECRET); }
     catch { return c.json({ error: { code: "unauthorized", message: "bad signature" } }, 401); }
-    try { await ingestor().ingest(event); }
+    try {
+      if (event.type === "user.deleted") {
+        const sub = (event.data as { sub?: unknown }).sub;
+        if (typeof sub !== "string" || !sub) throw new Error("malformed user.deleted event");
+        await deleteAccount(sub);
+      } else await ingestor().ingest(event);
+    }
     catch (e) {
       // A malformed event won't get better; anything else (e.g. the database) should be retried by Accounts' outbox.
       if (e instanceof Error && /malformed/.test(e.message)) return c.json({ error: { code: "bad_request", message: "malformed event" } }, 400);

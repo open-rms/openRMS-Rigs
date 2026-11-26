@@ -27,7 +27,7 @@ beforeAll(async () => {
   const db = await import("../src/db/index.js");
   pool = db.pool;
   await migrate();
-  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment, key_revocation, sync_state CASCADE");
+  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment, key_revocation, sync_state, account_pref CASCADE");
   app = (await import("../src/app.js")).createApp();
   user = token("u-1", "K1ABC", "user");
   other = token("u-2", "K2XYZ", "user");
@@ -351,5 +351,66 @@ describe("comments", () => {
     for (const b of ["   ", "x".repeat(4001)]) {
       expect((await app.request(`/api/v1/profiles/${pid}/comments`, { method: "POST", body: JSON.stringify({ body: b }), headers: auth(verified, h) })).status).toBe(400);
     }
+  });
+});
+
+describe("account deletion (user.deleted)", () => {
+  const h = { "content-type": "application/json" };
+  const event = (sub: string, id = "evt-del-1") => JSON.stringify({ id, type: "user.deleted", createdAt: new Date().toISOString(), data: { sub } });
+  const hook = async (body: string) => {
+    const { signWebhook } = await import("@openrms/service-auth");
+    return app.request("/api/v1/webhooks/accounts", { method: "POST", body, headers: { ...h, "openrms-signature": signWebhook(body, "whsec-test") } });
+  };
+
+  it("keeps published profiles with the chosen credit, drops the rest, anonymises activity", async () => {
+    const del = token("u-del", "K7DEL", "admin"); // verified: publishes at once
+    const delUnverified = token("u-del", "K7DEL", "user");
+    const pub = await json(app.request("/api/v1/profiles", { method: "POST", body: yaml.replace(/^title: .*$/m, "title: Deleted author's FT8"), headers: auth(del, { "content-type": "application/yaml" }) }));
+    expect(pub.status).toBe("published");
+    const pending = await json(app.request("/api/v1/profiles", { method: "POST", body: yaml.replace(/^title: .*$/m, "title: Never published"), headers: auth(delUnverified, { "content-type": "application/yaml" }) }));
+    expect(pending.status).toBe("pending");
+    // Someone else's profile that u-del stars, saves, reports on and comments on.
+    const target = await json(app.request("/api/v1/profiles", { method: "POST", body: yaml.replace(/^title: .*$/m, "title: Target"), headers: auth(verified, { "content-type": "application/yaml" }) }));
+    await app.request(`/api/v1/profiles/${target.id}/star`, { method: "PUT", headers: auth(del) });
+    await app.request(`/api/v1/profiles/${target.id}/favorite`, { method: "PUT", headers: auth(del) });
+    await app.request(`/api/v1/profiles/${target.id}/reports`, { method: "POST", body: JSON.stringify({ worked: true, note: "my shack notes" }), headers: auth(del, h) });
+    const cm = await json(app.request(`/api/v1/profiles/${target.id}/comments`, { method: "POST", body: JSON.stringify({ body: "worked great" }), headers: auth(del, h) }));
+    await app.request(`/api/v1/profiles/${target.id}/comments`, { method: "POST", body: JSON.stringify({ body: "same here", parent_id: cm.id }), headers: auth(other, h) });
+    expect((await json(app.request(`/api/v1/profiles/${target.id}`))).stats.stars).toBe(1);
+
+    // Preference: another name (validated).
+    expect((await app.request("/api/v1/me/deletion-preference", { method: "PUT", body: JSON.stringify({ credit: "name", name: "<a href=x>" }), headers: auth(del, h) })).status).toBe(400);
+    expect((await json(app.request("/api/v1/me/deletion-preference", { method: "PUT", body: JSON.stringify({ credit: "name", name: "Ham Radio Bob" }), headers: auth(del, h) }))).name).toBe("Ham Radio Bob");
+    const exp = await json(app.request("/api/v1/me/export", { headers: auth(del) }));
+    expect(exp.profiles.length).toBe(2);
+    expect(exp.deletion_preference).toEqual({ credit: "name", name: "Ham Radio Bob" });
+
+    expect((await hook(event("u-del"))).status).toBe(204);
+    expect((await hook(event("u-del"))).status).toBe(204); // replay finds nothing
+
+    const kept = await json(app.request(`/api/v1/profiles/${pub.id}`));
+    expect(kept.author.callsign).toBe("Ham Radio Bob");
+    expect((await app.request(`/api/v1/profiles/${pending.id}`)).status).toBe(404);
+    const t = await json(app.request(`/api/v1/profiles/${target.id}`));
+    expect(t.stats.stars).toBe(0);
+    expect(t.stats.worked).toBe(1); // the vote stays, anonymised
+    const reports = (await json(app.request(`/api/v1/profiles/${target.id}/reports`))).reports;
+    expect(reports[0]).toMatchObject({ callsign: null });
+    expect(reports[0].note ?? null).toBeNull();
+    const thread = (await json(app.request(`/api/v1/profiles/${target.id}/comments`))).comments;
+    const top = thread.find((x: any) => x.id === cm.id);
+    expect(top.deleted).toBe(true);
+    expect(top.body ?? null).toBeNull();
+    expect(top.replies.map((r: any) => r.body)).toContain("same here");
+    // Nothing left under the old sub.
+    const after = await json(app.request("/api/v1/me/export", { headers: auth(del) }));
+    expect(after.profiles.length + after.stars.length + after.reports.length + after.comments.length + after.favorites.length).toBe(0);
+  });
+
+  it("defaults to \"deleted account\" when no preference was set", async () => {
+    const del = token("u-del2", "K7DLB", "admin");
+    const pub = await json(app.request("/api/v1/profiles", { method: "POST", body: yaml.replace(/^title: .*$/m, "title: Default credit"), headers: auth(del, { "content-type": "application/yaml" }) }));
+    expect((await hook(event("u-del2", "evt-del-2"))).status).toBe(204);
+    expect((await json(app.request(`/api/v1/profiles/${pub.id}`))).author.callsign).toBe("deleted account");
   });
 });

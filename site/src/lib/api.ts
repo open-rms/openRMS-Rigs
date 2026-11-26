@@ -77,6 +77,10 @@ export const api = {
   operations: () => call<{ operations: string[] }>("/operations", { auth: false }),
   /** Signed in: the user's radios rank first (and carry `yours`). */
   rigs: (q?: string) => call<{ hamlib: string; count: number; rigs: RigSummary[] }>(`/rigs${qs({ q })}`),
+  deletionPref: () => call<{ credit: "callsign" | "deleted" | "name"; name: string | null }>("/me/deletion-preference"),
+  setDeletionPref: (credit: "callsign" | "deleted" | "name", name?: string) =>
+    call<{ credit: string; name: string | null }>("/me/deletion-preference", { method: "PUT", body: JSON.stringify({ credit, name }), headers: { "content-type": "application/json" } }),
+  exportData: () => call<unknown>("/me/export"),
   myRadios: () => call<{ source: string; radios: MyRadio[] }>("/me/radios"),
   rig: (macro: string) => call<Rig>(`/rigs/${encodeURIComponent(macro)}`, { auth: false }),
   /** For editors: revalidate (ETag) instead of trusting the HTTP cache, and fill in hints an older API lacks. */

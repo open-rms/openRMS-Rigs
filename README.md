@@ -109,6 +109,11 @@ Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local 
 - Rigs are keyed by Hamlib macro. Data is keyed by Accounts `sub`, never by callsign.
 - Every edit is an immutable revision. Unverified callsigns, and any profile with raw CAT (even
   from staff), wait for a moderator. While an edit waits, the last published revision stays public.
+- Account deletion (identity.md §4c): on `user.deleted`, published profiles stay (CC-BY-SA)
+  credited as the person chose on the account page (callsign, "deleted account" by default, or
+  another name); unpublished profiles, favorites and stars are deleted; comments are
+  soft-deleted; "worked" reports and audit rows are anonymised. `GET /api/v1/me/export` returns
+  everything Rigs holds for you.
 - API keys are minted at openRMS Accounts (`ormk_`, https://auth.openrms.dev/keys) and verified
   here offline. Scopes: `profiles:write`, `profiles:read-private`, `favorites`, `reports:write`,
   `comments:write` (published at `/.well-known/oauth-protected-resource`). Stars and moderation

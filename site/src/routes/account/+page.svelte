@@ -39,6 +39,23 @@
     if (!$me) return;
     api.keys().then((r) => { keys = r.keys.filter((k) => !k.revoked_at); keysAvailable = r.available; manageUrl = r.manage_url; }).catch(() => (keysAvailable = false));
   });
+  // If the openRMS account is deleted (identity.md §4c): how published profiles are credited.
+  let credit = $state<"callsign" | "deleted" | "name">("deleted");
+  let creditName = $state("");
+  let creditMsg = $state("");
+  $effect(() => { if ($me) api.deletionPref().then((p) => { credit = p.credit; creditName = p.name ?? ""; }).catch(() => {}); });
+  async function saveCredit() {
+    creditMsg = "";
+    try { await api.setDeletionPref(credit, credit === "name" ? creditName : undefined); creditMsg = "Saved."; }
+    catch (e) { creditMsg = (e as Error).message; }
+  }
+  async function downloadExport() {
+    const data = await api.exportData();
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "openrms-rigs-export.json"; a.click();
+    URL.revokeObjectURL(url);
+  }
   const day = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : "");
   async function useDev() {
     setDevToken(dev || null);
@@ -75,6 +92,22 @@
       </Card.Root>
     {:else}<p class="text-muted-foreground">None yet. <a href="/submit">Submit one.</a></p>{/each}
   </div>
+  <h2 id="deletion" class="mb-2 text-lg font-medium">If you delete your openRMS account</h2>
+  <p class="text-muted-foreground mb-3 max-w-3xl text-sm">
+    Your published profiles stay public (they're CC-BY-SA). Pending profiles, favorites and stars are deleted; comments are removed and your "worked" reports stay without your name. Choose how your published profiles are credited:
+  </p>
+  <div class="mb-3 grid max-w-xl gap-2 text-sm">
+    <label class="flex items-center gap-2"><input type="radio" name="credit" value="callsign" bind:group={credit} /> Keep my callsign{$me.callsign ? ` (${$me.callsign})` : ""}</label>
+    <label class="flex items-center gap-2"><input type="radio" name="credit" value="deleted" bind:group={credit} /> Show "deleted account"</label>
+    <label class="flex items-center gap-2"><input type="radio" name="credit" value="name" bind:group={credit} /> Show another name:
+      <Input class="h-8 max-w-56" maxlength={40} placeholder="e.g. Bob, Pine Ridge ARC" bind:value={creditName} disabled={credit !== "name"} /></label>
+  </div>
+  <div class="mb-8 flex flex-wrap items-center gap-2">
+    <Button size="sm" onclick={saveCredit}>Save</Button>
+    <Button size="sm" variant="outline" onclick={downloadExport}>Download my Rigs data (JSON)</Button>
+    {#if creditMsg}<span class="text-muted-foreground text-sm">{creditMsg}</span>{/if}
+  </div>
+
   <h2 id="keys" class="mb-2 text-lg font-medium">API keys</h2>
   <p class="text-muted-foreground mb-3 max-w-3xl text-sm">
     Keys for apps and scripts (rigctlWeb, hamstack, <code>RIGS_KEY=… pnpm import-profiles</code>) are made at openRMS Accounts. Pick Rigs and tick what the key may do: submit and edit profiles, read your pending ones, favorites, "worked" reports, comments. Keys can never star or moderate. Profiles submitted with a key go to the review queue.

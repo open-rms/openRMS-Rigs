@@ -122,3 +122,14 @@ export const syncState = pgTable("sync_state", {
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * What a person wants on their published profiles if they delete their openRMS account
+ * (identity.md §4c): their callsign, "deleted account", or another name. Default: deleted account.
+ */
+export const accountPref = pgTable("account_pref", {
+  sub: text("sub").primaryKey(),
+  deletionCredit: text("deletion_credit").notNull().default("deleted"),
+  deletionName: text("deletion_name"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
