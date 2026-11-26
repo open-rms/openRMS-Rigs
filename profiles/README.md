@@ -17,6 +17,7 @@ Researched example profiles, one folder per radio:
 | Folder | Profiles |
 |---|---|
 | `yaesu-ftdx10/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink ARDOP, Winlink VARA HF, SSB, AM, CW |
+| `yaesu-ft991/` | FT-991 and FT-991A (one Hamlib model): FT8/FT4, RTTY (AFSK), PSK31, Winlink ARDOP, Winlink VARA HF, SSB, AM, CW; menus 088+ differ by model and are named for both |
 | `icom-ic7300/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW |
 | `icom-ic7300mk2/` | FT8/FT4 over USB-C, FT8 over the LAN port, SSB, CW |
 | `icom-ic7610/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW (note: Hamlib picks USB-D1, whose MOD source must be set to USB) |

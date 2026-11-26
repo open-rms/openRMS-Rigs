@@ -1,0 +1,19 @@
+# Shared source list for the FT-991/991A profiles (each profile copies the ones it cites).
+- {id: S1, title: FT-991 Operating Manual, author: Yaesu Musen, url: 'https://www.rigpix.com/yaesu/ft991_manual.pdf', date: 2015-07, note: 'Mirror copy. USB data setup pp. 118-119, menu table pp. 121-123, item descriptions pp. 124-136 (033 on p. 127, 062-073 on pp. 130-131).'}
+- {id: S2, title: FT-991A Operating Manual, author: Yaesu Musen, url: 'https://www.rcqsl.com/manuals/52.pdf', date: '2021', note: Mirror copy. Menu items 001-087 match the FT-991; 088-153 are renumbered. USB data setup p. 123; names DT-G (DT GAIN).}
+- {id: S3, title: FT-991 CAT Operation Reference Book, author: Yaesu Musen, url: 'https://www.rigpix.com/yaesu/ft991_cat_manual.pdf', date: 2015-01, note: 'EX command format p. 7; menu parameter table pp. 7-9 (151 items; 031-033 on p. 7, 062-073 on p. 8).'}
+- {id: S4, title: FT-991A CAT Operation Reference Book, author: Yaesu Musen, url: 'https://rigpix.com/yaesu/ft991a_cat_manual.pdf', date: 2017-11, note: 'EX command format p. 7; menu parameter table pp. 7-9 (153 items; 031-033 on p. 7, 062-073 on p. 8).'}
+- {id: S5, title: 'fldigi wiki: FT991A howto', author: fldigi project wiki (W1HKJ and contributors), url: 'https://www.sourceforge.net/p/fldigi/wiki/FT991A_howto'}
+- {id: S6, title: FT-991A setup using the internal sound card (Winlink/WINMOR), author: 'N1RWY, adapted for the FT-991A (hosted by Winlink)', url: 'https://winlink.org/sites/default/files/RMSE_FORMS/ft-991a-setup.pdf', note: WINMOR era; the radio-side menu and DT GAIN advice still applies.}
+- {id: S7, title: Yaesu FT-991A settings for FT8, author: G4RUJ, url: 'https://www.qsl.net/g4ruj/FT8.htm', date: '2025'}
+- {id: S8, title: 'Pat wiki: Rig control', author: Martin Hebnes Pedersen LA5NTA and Pat contributors, url: 'https://github.com/la5nta/pat/wiki/Rig-control'}
+- {id: S9, title: FT-991A USB Configuration, author: HRD Software support, url: 'https://support.hamradiodeluxe.com/support/solutions/articles/51000054685-ft-991a-usb-configuration'}
+- {id: S10, title: 'Getting started with FreeDV: Yaesu (FT-991A section)', author: FreeDV project; FT-991A settings from Geoff VK3GTP, url: 'https://freedv.org/getting-started-yaesu/'}
+- {id: S11, title: 'The Standard COM Port: what is that and its use', author: PY2RAF (rfrht/FT-991A wiki), url: 'https://github.com/rfrht/FT-991A/wiki/The-Standard-COM-Port---what-is-that-and-its-use', date: 2022-10}
+- {id: S12, title: Configuring FT-991A for Phone DX, author: PY2RAF (rfrht/FT-991A wiki), url: 'https://github.com/rfrht/FT-991A/wiki/Configuring-FT-991A-for-Phone-DX', date: 2020-10}
+- {id: S13, title: 'Appendix: FT-991A menu settings (function list guide)', author: rfrht/FT991A-PAT wiki, url: 'https://github.com/rfrht/FT991A-PAT/wiki/appendix-ft-991-a-menu-settings', date: 2024-01}
+- {id: S14, title: 'OARC wiki: Yaesu FT-991A', author: OARC wiki contributors, url: 'https://wiki.oarc.uk/radios:ft-991a', date: 2024-03, note: HF packet (NinoTNC) settings; the USB audio items match other data modes.}
+- {id: S15, title: WSJT-X User Guide 2.7.0, author: Joe Taylor K1JT and the WSJT development group, url: 'https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html'}
+- {id: S16, title: 'Hamlib 4.7.2 FT-991 backend (rigctl --dump-caps -m 1035, rigs/yaesu/newcat.c)', author: Hamlib project, url: 'https://github.com/Hamlib/Hamlib/blob/master/rigs/yaesu/newcat.c', note: Serial 8N2 with CTS/RTS handshake; sends EX0321 (CAT TOT 100 ms) when it opens an FT-991/991A.}
+- {id: S17, title: 'Yaesu FT-991a or FT991 CW PTT fault (no PTT via USB or RS232 in CW mode): work-around', author: GM0ELP, url: 'https://gm0elp.blogspot.com/2019/03/yaesu-ft-991a-or-ft991-cw-ptt-fault-no.html', date: '2019-03-10'}
+- {id: S18, title: Fldigi Users Manual 4.2 (RX/TX audio levels), author: Dave Freese W1HKJ, url: 'https://www.w1hkj.org/FldigiHelp/audio_adjust_page.html'}

@@ -1,0 +1,177 @@
+schema: openrms-rigs/profile/v1
+title: FT-991/991A SSB phone with the stock hand mic
+summary: 'Yaesu''s method: MIC GAIN set on the ALC meter, processor off for normal QSOs, and the SSB menus
+  back on the mic if a data setup moved them.'
+rig:
+  macro: RIG_MODEL_FT991
+  hamlib_model: 1035
+  mfg: Yaesu
+  name: FT-991
+operation: ssb
+connection: usb
+interface: stock MH-31A8J hand mic
+hamlib: '>=4.6'
+audio:
+  tx_note: Set MIC GAIN so the ALC meter stays within its zone (up to half scale) on voice peaks, into
+    a 50-ohm load [S1].
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  check_only: true
+  expect:
+    one_of:
+    - USB
+    - LSB
+  note: LSB on 7 MHz and below, USB on 14 MHz and above (Yaesu's band convention).
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - F(M-LIST)
+  - AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: AUTO picks SLOW for SSB. Yaesu advises leaving the AGC delay menus alone. PY2RAF uses FAST for
+    phone DX.
+  sources:
+  - S1
+  - S2
+  - S12
+  confidence: high
+- id: mic-gain
+  kind: manual
+  name: MIC GAIN
+  safety: tx
+  manual:
+    menu: F(M-LIST) > MIC GAIN
+    value: ALC within its zone (up to half scale) on voice peaks
+  note: Talk at a normal level while watching the ALC meter. PY2RAF warns that more mic gain only distorts.
+    No source gives a number; it depends on your voice and mic.
+  sources:
+  - S1
+  - S12
+  confidence: medium
+- id: proc-off
+  kind: func
+  name: COMP
+  menu:
+  - F(M-LIST)
+  - PROC
+  value: false
+  safety: tx
+  note: Speech processor off for normal QSOs (PY2RAF runs it off even for DX). If you use it, set the
+    PROC level with care; it applies only to SSB.
+  sources:
+  - S1
+  - S12
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  menu:
+  - F(M-LIST)
+  - DNR
+  value: false
+  note: DNR off by default; switch it on as needed.
+  sources:
+  - S1
+  confidence: medium
+- id: mic-eq
+  kind: manual
+  name: MIC EQ
+  safety: tx
+  manual:
+    menu: F(M-LIST) > MIC-EQ
+    value: OFF with the hand mic
+  note: The parametric EQ has one set of menus for processor off (PRMTRC, bands OFF by default) and one
+    for processor on (P-PRMTRC, preset at the factory). No source gives FT-991 EQ values.
+  sources:
+  - S1
+  confidence: low
+- id: tx-bpf
+  kind: manual
+  name: SSB TX BPF
+  safety: tx
+  manual:
+    menu: MENU > SSB TX BPF (110 on the FT-991A, 112 on the FT-991)
+    value: 300-2700 (default); 400-2600 for a punchier DX sound
+  note: The fldigi wiki keeps 300-2700; PY2RAF uses 400-2600 for phone DX.
+  sources:
+  - S1
+  - S2
+  - S5
+  - S12
+  confidence: medium
+- id: ssb-mic-select
+  kind: manual
+  name: SSB MIC SELECT / PORT SELECT
+  safety: tx
+  manual:
+    menu: MENU > SSB MIC SELECT (106 on the FT-991A, 108 on the FT-991) and SSB PTT/PORT SELECT (108/109
+      or 110/111)
+    value: MIC; PTT DAKY; PORT DATA (defaults)
+  note: Yaesu's USB AFSK setup moves SSB PTT and PORT SELECT to RTS and USB, and some 60 m FT8 guides
+    set SSB MIC SELECT to REAR. OARC reminds you to put 108/109 (991A) back to DAKY/DATA. With MIC SELECT
+    on REAR the hand mic is dead in SSB.
+  sources:
+  - S1
+  - S2
+  - S14
+  confidence: medium
+- id: width
+  kind: manual
+  name: Receive width
+  manual:
+    menu: F(M-LIST) > WIDTH
+    value: 2.4 kHz (default); 1.8-3.2 kHz available
+  note: PY2RAF narrows to about 1950 Hz with SHIFT -220 Hz for phone DX.
+  sources:
+  - S1
+  - S12
+  confidence: medium
+notes: |-
+  Researched from Yaesu's FT-991 and FT-991A operating manuals and CAT reference books, the fldigi wiki, and FT-991A setup pages by N1RWY, G4RUJ, PY2RAF, HRD, FreeDV and OARC. Not every value has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Hamlib has one model (1035) for both radios.
+
+  Menu numbers: items 001-087 are the same on the FT-991 and FT-991A (both CAT books), so the EX steps here only use that range. From 088 on, the FT-991 table has two extra items (088 DIGITAL SQL TYPE, 089 DIGITAL SQL CODE) and two sweep-scope items (118 SCP START CYCLE, 119 ASC DIAL SPEED), while the FT-991A has SPECTRUM COLOR, WATER FALL COLOR and four WIRES-X items (150-153). So, for example, SSB PORT SELECT is 109 on the 991A and 111 on the 991. Those items are manual steps naming both numbers. The menu tables are from the manuals as published; later FT-991 firmware may differ, so check the item name on screen. The other visible difference: the FT-991 has a sweep scope (hence its scope-sweep items), the FT-991A a real-time scope.
+
+  Few sources publish FT-991 voice numbers, so MIC GAIN and EQ are left to the ALC meter and your ears. PY2RAF's DX settings (AGC FAST, NB on, WIDTH 1950) are noted as alternatives, not defaults [S12].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FT-991 Operating Manual
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_manual.pdf
+  date: 2015-07
+  note: Mirror copy. USB data setup pp. 118-119, menu table pp. 121-123, item descriptions pp. 124-136
+    (033 on p. 127, 062-073 on pp. 130-131).
+- id: S2
+  title: FT-991A Operating Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/52.pdf
+  date: '2021'
+  note: Mirror copy. Menu items 001-087 match the FT-991; 088-153 are renumbered. USB data setup p. 123;
+    names DT-G (DT GAIN).
+- id: S5
+  title: 'fldigi wiki: FT991A howto'
+  author: fldigi project wiki (W1HKJ and contributors)
+  url: https://www.sourceforge.net/p/fldigi/wiki/FT991A_howto
+- id: S12
+  title: Configuring FT-991A for Phone DX
+  author: PY2RAF (rfrht/FT-991A wiki)
+  url: https://github.com/rfrht/FT-991A/wiki/Configuring-FT-991A-for-Phone-DX
+  date: 2020-10
+- id: S14
+  title: 'OARC wiki: Yaesu FT-991A'
+  author: OARC wiki contributors
+  url: https://wiki.oarc.uk/radios:ft-991a
+  date: 2024-03
+  note: HF packet (NinoTNC) settings; the USB audio items match other data modes.

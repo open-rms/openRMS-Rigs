@@ -1,0 +1,531 @@
+schema: openrms-rigs/profile/v1
+title: FT-991/991A Winlink over VARA HF
+summary: Winlink over VARA HF with the FT-991's USB codec and CAT through rigctld or Winlink Express's
+  radio control. The DATA menus default to the rear 6-pin jack and a 500 Hz width, so they must change.
+rig:
+  macro: RIG_MODEL_FT991
+  hamlib_model: 1035
+  mfg: Yaesu
+  name: FT-991
+operation: winlink-vara
+connection: usb
+interface: built-in USB codec
+hamlib: '>=4.6'
+audio:
+  rx_target_dbfs: -25
+  rx_note: Band noise around -25 dBFS with no clipping on strong stations; set with 073 DATA OUT LEVEL
+    and the OS input level.
+  tx_note: No ALC. ARDOP and VARA aren't constant-envelope; keep DT GAIN and the software's drive below
+    the point where ALC moves [S6].
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: DATA-USB (D-U). Pat and Winlink Express ask rigctld/flrig for it.
+  sources:
+  - S1
+  - S6
+  - S8
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - F(M-LIST)
+  - AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: AUTO picks MID in DATA-USB. Yaesu says AGC OFF overloads the IF on strong signals and advises
+    leaving the AGC delay menus (001-003) alone. The WSJT-X guide's general advice to run AGC off is not
+    followed here.
+  sources:
+  - S1
+  - S2
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  menu:
+  - F(M-LIST)
+  - NB
+  value: false
+  note: Off for clean decoding; no FT-991 source tests NB with data modes.
+  sources:
+  - S1
+  confidence: low
+- id: nr-off
+  kind: func
+  name: NR
+  menu:
+  - F(M-LIST)
+  - DNR
+  value: false
+  note: DNR off; the function-list guide says it is not for digital modes.
+  sources:
+  - S1
+  - S7
+  - S13
+  confidence: medium
+- id: anf-off
+  kind: func
+  name: ANF
+  menu:
+  - F(M-LIST)
+  - DNF
+  value: false
+  note: DNF (digital notch) off.
+  sources:
+  - S1
+  - S7
+  confidence: medium
+- id: notch-off
+  kind: func
+  name: MN
+  menu:
+  - F(M-LIST)
+  - NOTCH
+  value: false
+  note: IF notch off.
+  sources:
+  - S1
+  - S7
+  confidence: medium
+- id: contour-off
+  kind: manual
+  name: CONTOUR
+  manual:
+    menu: F(M-LIST) > CONT
+    value: 'OFF'
+  note: Hamlib has no contour function for this radio, so set it by hand.
+  sources:
+  - S1
+  - S7
+  confidence: medium
+- id: power
+  kind: level
+  name: RFPOWER
+  menu:
+  - F(M-LIST)
+  - RF PWR
+  value: 0.5
+  unit: fraction
+  display: ~50 W
+  safety: tx
+  note: Winlink sessions run long transmissions; derate to what your station sustains. N1RWY starts at
+    8-50 W and works up.
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: low
+- id: data-mode
+  kind: cat
+  name: DATA MODE
+  menu:
+  - MENU
+  - 062 DATA MODE
+  value: 1
+  cat:
+    protocol: ascii
+    read: EX062;
+    reply: ^EX062(\d);$
+    set: EX062{value};
+    values:
+      '0': PSK
+      '1': OTHERS
+  note: 062 DATA MODE = OTHERS, so DATA-USB passes the software's audio as is and 064/065 set the passband.
+    The factory default is PSK. EX062 is the same item on both radios (CAT books p. 8).
+  sources:
+  - S1
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S10
+  - S14
+  confidence: high
+- id: other-disp
+  kind: manual
+  name: OTHER DISP (SSB)
+  manual:
+    menu: MENU > 064 OTHER DISP (SSB)
+    value: +1500 Hz (default 0)
+  note: 'Display offset in DATA mode. Set by hand: the CAT value is signed (+1500), which raw CAT steps
+    can''t carry. Set 064 and 065 to the same value.'
+  sources:
+  - S1
+  - S5
+  - S6
+  - S7
+  - S10
+  confidence: high
+- id: other-shift
+  kind: manual
+  name: OTHER SHIFT (SSB)
+  manual:
+    menu: MENU > 065 OTHER SHIFT (SSB)
+    value: +1500 Hz (default 0)
+  note: 'Carrier point in DATA mode; 1500 Hz centres the passband on the software''s audio. N1RWY: this
+    widens the usable audio. OARC uses 1700/1500 Hz with a narrow width for HF packet.'
+  sources:
+  - S1
+  - S5
+  - S6
+  - S7
+  - S10
+  - S14
+  confidence: high
+- id: data-lcut
+  kind: cat
+  name: DATA LCUT FREQ
+  menu:
+  - MENU
+  - 066 DATA LCUT FREQ
+  value: '00'
+  cat:
+    protocol: ascii
+    read: EX066;
+    reply: ^EX066(\d{2});$
+    set: EX066{value:02};
+    values:
+      '00': 'OFF'
+      '05': 300 Hz (default)
+  note: 'Receive low-cut filter in DATA mode: OFF. The fldigi wiki instead keeps 300 Hz (the default)
+    with an 18 dB/oct slope. P2 is 00 (OFF) or 01-19 for 100-1000 Hz in 50 Hz steps (CAT books p. 8).'
+  sources:
+  - S1
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  confidence: medium
+- id: data-hcut
+  kind: manual
+  name: DATA HCUT FREQ
+  manual:
+    menu: MENU > 068 DATA HCUT FREQ
+    value: OFF (default 3000 Hz)
+  note: 'Receive high-cut filter in DATA mode. The fldigi wiki uses 3600 Hz instead. Kept as a manual
+    step: both CAT books give 068 one digit although its values run 00-67 (the digit counts for 068 and
+    069 look swapped).'
+  sources:
+  - S1
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  confidence: medium
+- id: data-in-select
+  kind: cat
+  name: DATA IN SELECT
+  menu:
+  - MENU
+  - 070 DATA IN SELECT
+  value: 1
+  safety: tx
+  cat:
+    protocol: ascii
+    read: EX070;
+    reply: ^EX070(\d);$
+    set: EX070{value};
+    values:
+      '0': MIC
+      '1': REAR
+  note: '070 DATA IN SELECT = REAR (the factory default): DATA-mode transmit audio comes from the rear
+    USB or RTTY/DATA jack, not the mic. Yaesu''s own DATA (PSK) table shows MIC, but that contradicts
+    the item''s description and every other source; REAR is used here. EX070 is the same item on both
+    radios (CAT books p. 8).'
+  sources:
+  - S1
+  - S2
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  confidence: high
+- id: data-port-select
+  kind: manual
+  name: DATA PORT SELECT
+  manual:
+    menu: MENU > 072 DATA PORT SELECT
+    value: USB (default DATA)
+  note: 'Rear input for DATA mode when 070 is REAR. The factory default is DATA (the 6-pin jack), so this
+    must change for USB audio. Kept manual: both CAT books list its values as 1 DATA / 2 USB, unlike the
+    0/1 of the matching AM and SSB items, and no source confirms the codes on a radio.'
+  sources:
+  - S1
+  - S2
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  confidence: high
+- id: data-ptt-select
+  kind: manual
+  name: DATA PTT SELECT
+  safety: tx
+  manual:
+    menu: MENU > 071 DATA PTT SELECT
+    value: DAKY (default) with CAT PTT; RTS or DTR only for serial-line PTT
+  note: 'Picks which hardware line keys DATA mode: DAKY (rear DATA jack pin 3) or RTS/DTR on the USB virtual
+    COM port. With CAT PTT the radio is keyed by command, so DAKY keeps the serial lines from keying it
+    (inference; no source tests CAT PTT against each setting). Sources split: Yaesu''s DATA setup, G4RUJ
+    and N1RWY use RTS; the fldigi wiki, HRD and FreeDV keep DAKY. PY2RAF found RTS/DTR PTT works only
+    on the Standard COM port, not the Enhanced (CAT) port. With RTS selected, a program that raises RTS
+    on the Standard port when it opens it will key the radio.'
+  sources:
+  - S1
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  - S11
+  confidence: medium
+- id: data-out-level
+  kind: cat
+  name: DATA OUT LEVEL
+  menu:
+  - MENU
+  - 073 DATA OUT LEVEL
+  check_only: true
+  cat:
+    protocol: ascii
+    read: EX073;
+    reply: ^EX073(\d{3});$
+    set: EX073{value:03};
+  note: Check only. Receive audio level to the computer in DATA mode, 0-100 (default 50). Sources run
+    it at 50 (default), 80-95 (OARC) or 100 (fldigi wiki); set it to reach the receive target with the
+    computer's input near maximum. EX073 is the same item on both radios (CAT books p. 8).
+  sources:
+  - S1
+  - S3
+  - S4
+  - S5
+  - S14
+  confidence: low
+- id: dt-gain
+  kind: manual
+  name: DT GAIN
+  safety: tx
+  manual:
+    menu: F(M-LIST) > DT GAIN
+    value: Low (start around 5-10); raise until power is reached with no ALC
+  note: Transmit gain for rear/USB audio in DATA mode (shown as DT-G). N1RWY warns that the default of
+    50 overdrives the modulator and causes audio harmonics; OARC runs 10, G4RUJ 18. Hamlib has no level
+    for it on this radio.
+  sources:
+  - S1
+  - S2
+  - S6
+  - S7
+  - S13
+  - S14
+  confidence: medium
+- id: width
+  kind: manual
+  name: Receive width
+  manual:
+    menu: F(M-LIST) > WIDTH (NAR/WIDE = WIDE)
+    value: 3000 Hz
+  note: The DATA-mode default is only 500 Hz, which hides most of the 0-3 kHz audio window. The mode step
+    asks Hamlib for 3000 Hz; check it on the display.
+  sources:
+  - S1
+  - S2
+  - S6
+  - S7
+  confidence: high
+- id: cat-rate
+  kind: manual
+  name: CAT RATE
+  manual:
+    menu: MENU > 031 CAT RATE
+    value: 38400 bps (default 4800)
+  note: Change it on the radio, not over CAT (the link drops when the rate changes), and match it in your
+    software. The fldigi wiki and FreeDV use 38400; N1RWY and G4RUJ 9600; HRD keeps 4800. Any rate works
+    when both ends match.
+  sources:
+  - S1
+  - S5
+  - S6
+  - S7
+  - S9
+  - S10
+  confidence: medium
+- id: cat-tot
+  kind: cat
+  name: CAT TOT
+  menu:
+  - MENU
+  - 032 CAT TOT
+  value: 1
+  cat:
+    protocol: ascii
+    read: EX032;
+    reply: ^EX032(\d);$
+    set: EX032{value};
+    values:
+      '0': 10 ms
+      '1': 100 ms
+      '2': 1000 ms
+      '3': 3000 ms
+  note: 'CAT command time-out: 100 ms. Hamlib sends EX0321 itself each time it opens an FT-991/991A, because
+    the 10 ms default caused errors; N1RWY and G4RUJ also use 100 ms. The fldigi wiki and FreeDV keep
+    10 ms. EX032 is the same item on both radios (CAT books p. 7).'
+  sources:
+  - S1
+  - S3
+  - S4
+  - S6
+  - S7
+  - S16
+  confidence: medium
+- id: cat-rts
+  kind: cat
+  name: CAT RTS
+  menu:
+  - MENU
+  - 033 CAT RTS
+  check_only: true
+  value: 1
+  cat:
+    protocol: ascii
+    read: EX033;
+    reply: ^EX033(\d);$
+    set: EX033{value};
+    values:
+      '0': DISABLE
+      '1': ENABLE
+  note: 'Check only. CAT RTS = ENABLE (the default) makes the radio watch RTS on the CAT (Enhanced) port
+    as a handshake. Hamlib opens this radio with CTS/RTS hardware handshake, which matches ENABLE. If
+    your software uses no handshake, set it to Hardware or set this menu to DISABLE. HRD: if the radio
+    transmits when the program starts, disable CAT RTS. Not set over CAT, because changing the handshake
+    mid-session can drop the link. EX033 is the same item on both radios (CAT books p. 7).'
+  sources:
+  - S1
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S9
+  - S16
+  confidence: high
+software:
+- app: rigctld
+  setting: command
+  value: rigctld -m 1035 -s 38400 -r <the radio's Enhanced COM port>
+  note: Match -s to menu 031. Hamlib uses 8N2 with CTS/RTS handshake for this radio [S16]. Yaesu says
+    to use the Enhanced port for CAT and try the Standard port only if that fails [S1].
+- app: winlink-express
+  setting: Radio Setup
+  value: FT-991A as the radio, Enhanced COM port, baud = menu 031
+  note: N1RWY's sheet (for WINMOR) ticks Enable RTS and Enable DTR; RTS on the Enhanced port is the CAT
+    handshake, not PTT [S6] [S11].
+- app: vara
+  setting: Audio devices
+  value: USB AUDIO CODEC (the radio)
+notes: |-
+  Researched from Yaesu's FT-991 and FT-991A operating manuals and CAT reference books, the fldigi wiki, and FT-991A setup pages by N1RWY, G4RUJ, PY2RAF, HRD, FreeDV and OARC. Not every value has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Hamlib has one model (1035) for both radios.
+
+  Menu numbers: items 001-087 are the same on the FT-991 and FT-991A (both CAT books), so the EX steps here only use that range. From 088 on, the FT-991 table has two extra items (088 DIGITAL SQL TYPE, 089 DIGITAL SQL CODE) and two sweep-scope items (118 SCP START CYCLE, 119 ASC DIAL SPEED), while the FT-991A has SPECTRUM COLOR, WATER FALL COLOR and four WIRES-X items (150-153). So, for example, SSB PORT SELECT is 109 on the 991A and 111 on the 991. Those items are manual steps naming both numbers. The menu tables are from the manuals as published; later FT-991 firmware may differ, so check the item name on screen. The other visible difference: the FT-991 has a sweep scope (hence its scope-sweep items), the FT-991A a real-time scope.
+
+  No FT-991-specific VARA HF source was read beyond N1RWY's WINMOR-era sheet. VARA's drive level and occupied bandwidth against the DATA filters weren't confirmed; treat them as starting points [S6].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FT-991 Operating Manual
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_manual.pdf
+  date: 2015-07
+  note: Mirror copy. USB data setup pp. 118-119, menu table pp. 121-123, item descriptions pp. 124-136
+    (033 on p. 127, 062-073 on pp. 130-131).
+- id: S2
+  title: FT-991A Operating Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/52.pdf
+  date: '2021'
+  note: Mirror copy. Menu items 001-087 match the FT-991; 088-153 are renumbered. USB data setup p. 123;
+    names DT-G (DT GAIN).
+- id: S3
+  title: FT-991 CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_cat_manual.pdf
+  date: 2015-01
+  note: EX command format p. 7; menu parameter table pp. 7-9 (151 items; 031-033 on p. 7, 062-073 on p.
+    8).
+- id: S4
+  title: FT-991A CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://rigpix.com/yaesu/ft991a_cat_manual.pdf
+  date: 2017-11
+  note: EX command format p. 7; menu parameter table pp. 7-9 (153 items; 031-033 on p. 7, 062-073 on p.
+    8).
+- id: S5
+  title: 'fldigi wiki: FT991A howto'
+  author: fldigi project wiki (W1HKJ and contributors)
+  url: https://www.sourceforge.net/p/fldigi/wiki/FT991A_howto
+- id: S6
+  title: FT-991A setup using the internal sound card (Winlink/WINMOR)
+  author: N1RWY, adapted for the FT-991A (hosted by Winlink)
+  url: https://winlink.org/sites/default/files/RMSE_FORMS/ft-991a-setup.pdf
+  note: WINMOR era; the radio-side menu and DT GAIN advice still applies.
+- id: S7
+  title: Yaesu FT-991A settings for FT8
+  author: G4RUJ
+  url: https://www.qsl.net/g4ruj/FT8.htm
+  date: '2025'
+- id: S8
+  title: 'Pat wiki: Rig control'
+  author: Martin Hebnes Pedersen LA5NTA and Pat contributors
+  url: https://github.com/la5nta/pat/wiki/Rig-control
+- id: S9
+  title: FT-991A USB Configuration
+  author: HRD Software support
+  url: https://support.hamradiodeluxe.com/support/solutions/articles/51000054685-ft-991a-usb-configuration
+- id: S10
+  title: 'Getting started with FreeDV: Yaesu (FT-991A section)'
+  author: FreeDV project; FT-991A settings from Geoff VK3GTP
+  url: https://freedv.org/getting-started-yaesu/
+- id: S11
+  title: 'The Standard COM Port: what is that and its use'
+  author: PY2RAF (rfrht/FT-991A wiki)
+  url: https://github.com/rfrht/FT-991A/wiki/The-Standard-COM-Port---what-is-that-and-its-use
+  date: 2022-10
+- id: S13
+  title: 'Appendix: FT-991A menu settings (function list guide)'
+  author: rfrht/FT991A-PAT wiki
+  url: https://github.com/rfrht/FT991A-PAT/wiki/appendix-ft-991-a-menu-settings
+  date: 2024-01
+- id: S14
+  title: 'OARC wiki: Yaesu FT-991A'
+  author: OARC wiki contributors
+  url: https://wiki.oarc.uk/radios:ft-991a
+  date: 2024-03
+  note: HF packet (NinoTNC) settings; the USB audio items match other data modes.
+- id: S16
+  title: Hamlib 4.7.2 FT-991 backend (rigctl --dump-caps -m 1035, rigs/yaesu/newcat.c)
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/blob/master/rigs/yaesu/newcat.c
+  note: Serial 8N2 with CTS/RTS handshake; sends EX0321 (CAT TOT 100 ms) when it opens an FT-991/991A.

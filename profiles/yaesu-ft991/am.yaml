@@ -1,0 +1,118 @@
+schema: openrms-rigs/profile/v1
+title: FT-991/991A AM phone
+summary: AM with Yaesu's 25 W carrier limit and MIC GAIN set so the power meter doesn't swing on speech.
+rig:
+  macro: RIG_MODEL_FT991
+  hamlib_model: 1035
+  mfg: Yaesu
+  name: FT-991
+operation: am
+connection: usb
+interface: stock MH-31A8J hand mic
+hamlib: '>=4.6'
+audio:
+  tx_note: Set MIC GAIN so the ALC meter doesn't deflect and the PO meter stays still when speaking [S1].
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: AM
+  passband_hz: 0
+  note: Receive width is fixed at 9 kHz in AM.
+  sources:
+  - S1
+  confidence: high
+- id: power
+  kind: level
+  name: RFPOWER
+  menu:
+  - F(M-LIST)
+  - RF PWR
+  value: 0.25
+  unit: fraction
+  display: ~25 W carrier
+  expect:
+    max: 0.25
+  safety: tx
+  note: 'Yaesu: set a maximum carrier of 25 W in AM.'
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - F(M-LIST)
+  - AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: AUTO picks SLOW for AM.
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: mic-gain
+  kind: manual
+  name: MIC GAIN
+  safety: tx
+  manual:
+    menu: F(M-LIST) > MIC GAIN
+    value: No ALC deflection on voice peaks
+  sources:
+  - S1
+  confidence: high
+- id: am-mic-select
+  kind: manual
+  name: AM MIC SELECT
+  safety: tx
+  manual:
+    menu: MENU > 045 AM MIC SELECT
+    value: MIC (default)
+  note: REAR takes AM transmit audio from the rear/USB port instead (with 048 AM PORT SELECT).
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: high
+notes: |-
+  Researched from Yaesu's FT-991 and FT-991A operating manuals and CAT reference books, the fldigi wiki, and FT-991A setup pages by N1RWY, G4RUJ, PY2RAF, HRD, FreeDV and OARC. Not every value has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Hamlib has one model (1035) for both radios.
+
+  Menu numbers: items 001-087 are the same on the FT-991 and FT-991A (both CAT books), so the EX steps here only use that range. From 088 on, the FT-991 table has two extra items (088 DIGITAL SQL TYPE, 089 DIGITAL SQL CODE) and two sweep-scope items (118 SCP START CYCLE, 119 ASC DIAL SPEED), while the FT-991A has SPECTRUM COLOR, WATER FALL COLOR and four WIRES-X items (150-153). So, for example, SSB PORT SELECT is 109 on the 991A and 111 on the 991. Those items are manual steps naming both numbers. The menu tables are from the manuals as published; later FT-991 firmware may differ, so check the item name on screen. The other visible difference: the FT-991 has a sweep scope (hence its scope-sweep items), the FT-991A a real-time scope.
+
+  AM receive filters (041-044) and the parametric EQ can shape the audio; no source gives FT-991 AM values, so they stay at their defaults [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FT-991 Operating Manual
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_manual.pdf
+  date: 2015-07
+  note: Mirror copy. USB data setup pp. 118-119, menu table pp. 121-123, item descriptions pp. 124-136
+    (033 on p. 127, 062-073 on pp. 130-131).
+- id: S2
+  title: FT-991A Operating Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/52.pdf
+  date: '2021'
+  note: Mirror copy. Menu items 001-087 match the FT-991; 088-153 are renumbered. USB data setup p. 123;
+    names DT-G (DT GAIN).
+- id: S3
+  title: FT-991 CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_cat_manual.pdf
+  date: 2015-01
+  note: EX command format p. 7; menu parameter table pp. 7-9 (151 items; 031-033 on p. 7, 062-073 on p.
+    8).
+- id: S4
+  title: FT-991A CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://rigpix.com/yaesu/ft991a_cat_manual.pdf
+  date: 2017-11
+  note: EX command format p. 7; menu parameter table pp. 7-9 (153 items; 031-033 on p. 7, 062-073 on p.
+    8).

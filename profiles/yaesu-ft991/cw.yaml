@@ -1,0 +1,204 @@
+schema: openrms-rigs/profile/v1
+title: FT-991/991A CW with paddles (semi break-in)
+summary: 'The built-in keyer with Yaesu''s defaults: semi break-in, ELEKEY-B, and a narrower receive width
+  than the 2.4 kHz the radio starts with.'
+rig:
+  macro: RIG_MODEL_FT991
+  hamlib_model: 1035
+  mfg: Yaesu
+  name: FT-991
+operation: cw
+connection: usb
+interface: paddle on the front KEY jack
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 500
+  note: The CW default width is 2.4 kHz; the WIDTH range in CW is 500 Hz-3 kHz.
+  sources:
+  - S1
+  confidence: medium
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - F(M-LIST)
+  - AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: AUTO picks FAST for CW. Yaesu advises leaving the AGC delay menus alone.
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: apf-off
+  kind: func
+  name: APF
+  menu:
+  - F(M-LIST)
+  - APF
+  value: false
+  note: Audio peak filter off by default (CW only); switch it on under QRM.
+  sources:
+  - S1
+  - S13
+  confidence: high
+- id: keyer
+  kind: manual
+  name: Keyer
+  manual:
+    menu: F(M-LIST) > KEYER
+    value: ON for paddles, OFF for a straight key
+  sources:
+  - S1
+  - S13
+  confidence: high
+- id: keyer-type
+  kind: manual
+  name: KEYER TYPE
+  manual:
+    menu: MENU > 012 KEYER TYPE
+    value: ELEKEY-B (default)
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: medium
+- id: dot-dash
+  kind: manual
+  name: KEYER DOT/DASH
+  manual:
+    menu: MENU > 013 KEYER DOT/DASH
+    value: NOR (default); REV for left-handed operators
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: high
+- id: weight
+  kind: manual
+  name: CW WEIGHT
+  safety: tx
+  manual:
+    menu: MENU > 014 CW WEIGHT
+    value: 3.0 (default; range 2.5-4.5)
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: high
+- id: bk-in
+  kind: manual
+  name: BK-IN
+  safety: tx
+  manual:
+    menu: F(M-LIST) > BK-IN
+    value: ON to transmit; OFF to practise with the sidetone only
+  note: Break-in can't be set from a profile (it keys the radio).
+  sources:
+  - S1
+  confidence: high
+- id: bk-type
+  kind: manual
+  name: CW BK-IN TYPE
+  safety: tx
+  manual:
+    menu: MENU > 056 CW BK-IN TYPE
+    value: SEMI (default); FULL for QSK
+  note: GM0ELP finds full break-in wears the TX/RX relay and prefers an external keyer for contests.
+  sources:
+  - S1
+  - S17
+  confidence: high
+- id: bk-delay
+  kind: manual
+  name: CW BK-IN DELAY
+  safety: tx
+  manual:
+    menu: MENU > 057 CW BK-IN DELAY
+    value: 200 ms (default; 30-3000 ms)
+  note: Lengthen at slow speeds, shorten when sending fast.
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: medium
+- id: wave-shape
+  kind: manual
+  name: CW WAVE SHAPE
+  safety: tx
+  manual:
+    menu: MENU > 058 CW WAVE SHAPE
+    value: 4 ms (default)
+  note: The FT-991 manual offers 2 or 4 ms; the CAT books list 1/2/4/6 ms.
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: medium
+- id: pc-keying
+  kind: manual
+  name: PC KEYING
+  manual:
+    menu: MENU > 060 PC KEYING
+    value: OFF (default) when keying with a paddle
+  note: DTR or RTS keys CW from software over the USB virtual COM port (Yaesu). GM0ELP reports PC PTT
+    does not work in CW mode on either model.
+  sources:
+  - S1
+  - S17
+  confidence: medium
+notes: |-
+  Researched from Yaesu's FT-991 and FT-991A operating manuals and CAT reference books, the fldigi wiki, and FT-991A setup pages by N1RWY, G4RUJ, PY2RAF, HRD, FreeDV and OARC. Not every value has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Hamlib has one model (1035) for both radios.
+
+  Menu numbers: items 001-087 are the same on the FT-991 and FT-991A (both CAT books), so the EX steps here only use that range. From 088 on, the FT-991 table has two extra items (088 DIGITAL SQL TYPE, 089 DIGITAL SQL CODE) and two sweep-scope items (118 SCP START CYCLE, 119 ASC DIAL SPEED), while the FT-991A has SPECTRUM COLOR, WATER FALL COLOR and four WIRES-X items (150-153). So, for example, SSB PORT SELECT is 109 on the 991A and 111 on the 991. Those items are manual steps naming both numbers. The menu tables are from the manuals as published; later FT-991 firmware may differ, so check the item name on screen. The other visible difference: the FT-991 has a sweep scope (hence its scope-sweep items), the FT-991A a real-time scope.
+
+  CW pitch (300-1050 Hz in 10 Hz steps via F(M-LIST) > PITCH) and keyer speed (4-60 WPM via SPEED) are personal choices, so they aren't set here [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FT-991 Operating Manual
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_manual.pdf
+  date: 2015-07
+  note: Mirror copy. USB data setup pp. 118-119, menu table pp. 121-123, item descriptions pp. 124-136
+    (033 on p. 127, 062-073 on pp. 130-131).
+- id: S2
+  title: FT-991A Operating Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/52.pdf
+  date: '2021'
+  note: Mirror copy. Menu items 001-087 match the FT-991; 088-153 are renumbered. USB data setup p. 123;
+    names DT-G (DT GAIN).
+- id: S3
+  title: FT-991 CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://www.rigpix.com/yaesu/ft991_cat_manual.pdf
+  date: 2015-01
+  note: EX command format p. 7; menu parameter table pp. 7-9 (151 items; 031-033 on p. 7, 062-073 on p.
+    8).
+- id: S4
+  title: FT-991A CAT Operation Reference Book
+  author: Yaesu Musen
+  url: https://rigpix.com/yaesu/ft991a_cat_manual.pdf
+  date: 2017-11
+  note: EX command format p. 7; menu parameter table pp. 7-9 (153 items; 031-033 on p. 7, 062-073 on p.
+    8).
+- id: S13
+  title: 'Appendix: FT-991A menu settings (function list guide)'
+  author: rfrht/FT991A-PAT wiki
+  url: https://github.com/rfrht/FT991A-PAT/wiki/appendix-ft-991-a-menu-settings
+  date: 2024-01
+- id: S17
+  title: 'Yaesu FT-991a or FT991 CW PTT fault (no PTT via USB or RS232 in CW mode): work-around'
+  author: GM0ELP
+  url: https://gm0elp.blogspot.com/2019/03/yaesu-ft-991a-or-ft991-cw-ptt-fault-no.html
+  date: '2019-03-10'
