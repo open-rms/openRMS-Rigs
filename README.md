@@ -29,6 +29,7 @@ PostgreSQL (own database `openrms_rigs`), Hamlib (`rigctl`, catalog build only).
 |---|---|
 | `api/` | Hono + Drizzle service (TypeScript). Port 8790 |
 | `api/catalog/hamlib-<ver>.json` | Capabilities of every Hamlib model, from `rigctl -l` and `--dump-caps` |
+| `api/catalog/quirks.json` | Corrections from tests on real radios, e.g. names rigctl lists as gettable that the backend can't read (apply-plan marks them `readable: false`) |
 | `api/scripts/gen-catalog.ts` | Rebuilds the catalog from the installed Hamlib |
 | `profiles/` | Researched example profiles (FT-DX10, IC-7300, IC-7300MK2) with credited sources, CC-BY-SA-4.0. See `profiles/README.md` |
 | `site/` | SvelteKit + Tailwind + shadcn-svelte static SPA, a pure client of the API. Port 5174. The submit page has a capability-driven form (built from the radio's Hamlib caps plus the API's `profile` hints) and YAML/JSON tabs that edit the same document |

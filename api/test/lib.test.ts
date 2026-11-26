@@ -204,3 +204,16 @@ describe("sources", () => {
     expect(validateProfile(p).errors.map((e) => e.message).join()).toMatch(/S9/);
   });
 });
+
+describe("catalog quirks", () => {
+  it("FT-DX10 COMP can be set but not read back", async () => {
+    const { findRig } = await import("../src/lib/catalog.js");
+    const rig = findRig("RIG_MODEL_FTDX10")!;
+    expect(rig.funcs.get).not.toContain("COMP");
+    expect(rig.funcs.set).toContain("COMP");
+    const p = clone(ex("ftdx10-ardop.yaml"));
+    p.steps.push({ id: "comp", kind: "func", name: "COMP", value: false });
+    expect(buildPlan(p).steps.find((s) => s.id === "comp")).toMatchObject({ readable: false, rigctld: { get: null, set: "U COMP 0" } });
+  });
+});
+

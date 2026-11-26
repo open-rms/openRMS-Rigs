@@ -1,0 +1,12 @@
+{
+  "$comment": "Corrections to the generated Hamlib catalogs from tests on real radios. `unreadable` names are listed by rigctl as gettable but the backend rejects the get, so the apply-plan marks them readable: false (can't check or restore automatically). Applied to every catalog version until a test shows a fix.",
+  "rigs": {
+    "RIG_MODEL_FTDX10": {
+      "unreadable": {
+        "funcs": [
+          { "name": "COMP", "evidence": "get_func COMP returns RPRT -9 on a real FT-DX10, Hamlib 4.6.2 (rigctlWeb test, 2026-11-26). set_func works." }
+        ]
+      }
+    }
+  }
+}
