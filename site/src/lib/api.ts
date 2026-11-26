@@ -16,7 +16,7 @@ export type Step = {
   id: string; kind: "mode" | "level" | "func" | "parm" | "cat" | "manual"; name: string; value?: Scalar; passband_hz?: number;
   expect?: { min?: number; max?: number; one_of?: Scalar[]; not?: Scalar[] }; check_only?: boolean; safety?: "rx" | "tx";
   unit?: string; display?: string; cat?: { protocol: "ascii" | "civ"; read?: string; reply?: string; set?: string; values?: Record<string, string> };
-  manual?: { menu: string; value: string; image?: string }; note?: string;
+  manual?: { menu: string; value: string; image?: string }; menu?: string[]; note?: string;
   sources?: string[]; confidence?: "high" | "medium" | "low";
 };
 export type Source = { id: string; title: string; author?: string; url?: string; date?: string; note?: string };

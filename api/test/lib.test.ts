@@ -60,6 +60,18 @@ describe("safety", () => {
     expect(catProblem("civ", "1C0001")).not.toBeNull();
     expect(catProblem("civ", "1A050071")).toBeNull();
   });
+
+  it("raises CAT steps in tx families to safety tx, and passes menu paths to the plan", () => {
+    const p = clone(ex("ftdx10-ardop.yaml"));
+    p.steps.push({ id: "pc", kind: "cat", name: "Power", value: 50, menu: ["FUNC", "RF POWER"], cat: { protocol: "ascii", read: "PC;", reply: "^PC(\\d{3});$", set: "PC{value:03};" } });
+    const v = validateProfile(p);
+    expect(v.errors).toEqual([]);
+    const plan = buildPlan(v.profile!);
+    expect(plan.steps.find((s) => s.id === "pc")).toMatchObject({ safety: "tx", menu: ["FUNC", "RF POWER"] });
+    const sm = clone(ex("ftdx10-ardop.yaml"));
+    sm.steps.push({ id: "sm", kind: "cat", name: "meter", value: 1, cat: { protocol: "ascii", read: "SM0;", set: "SM0{value:03};" } });
+    expect(validateProfile(sm).errors.some((e) => e.message.includes("can't be used to set"))).toBe(true);
+  });
 });
 
 describe("validation", () => {

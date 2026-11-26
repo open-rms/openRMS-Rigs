@@ -83,6 +83,12 @@
     st.check_only = v === "check";
     doc.steps = [...doc.steps, st];
   }
+  // Step menu path: typed as "A > B > C", stored as ["A", "B", "C"].
+  const menuText = (s: Step) => (s.menu ?? []).join(" > ");
+  function setMenu(s: Step, text: string) {
+    const parts = text.split(">").map((x) => x.trim()).filter(Boolean);
+    if (parts.length) s.menu = parts; else delete s.menu;
+  }
   const setCount = (kind: Step["kind"]) => doc.steps.filter((s) => s.kind === kind).length;
 
   // Functions: tri-state per function
@@ -93,8 +99,10 @@
   function setFunc(name: string, v: string) {
     const s = find("func", name);
     if (!v) { if (s) remove(s); return; }
-    const next: Step = { id: s?.id ?? uniqueId(doc, name), kind: "func", name, value: v === "on" || (v === "check" && !!s?.value),
-      ...(v === "check" ? { check_only: true } : {}), ...(rig?.profile.tx_funcs.includes(name) ? { safety: "tx" as const } : {}), ...(s?.note ? { note: s.note } : {}) };
+    // Keep everything else on the step (note, menu, sources, confidence) when the state changes.
+    const { check_only: _c, safety: _s, value: _v, ...rest } = s ?? ({} as Partial<Step>);
+    const next: Step = { ...rest, id: s?.id ?? uniqueId(doc, name), kind: "func", name, value: v === "on" || (v === "check" && !!s?.value),
+      ...(v === "check" ? { check_only: true } : {}), ...(rig?.profile.tx_funcs.includes(name) ? { safety: "tx" as const } : {}) };
     doc.steps = s ? doc.steps.map((x) => (x === s ? next : x)) : [...doc.steps, next];
   }
 
@@ -347,7 +355,8 @@
           <Input class="font-mono" placeholder={'reply regex, e.g. ^EX010413(\\d{3});$'} bind:value={s.cat!.reply} />
           <Input class="font-mono" placeholder={'set, e.g. "EX010413{value:03};"'} bind:value={s.cat!.set} />
           <Input placeholder="values: 0=OFF, 1=FAST" value={catValuesText(s)} oninput={(e) => catValues(s, (e.currentTarget as HTMLInputElement).value)} />
-          <Input class="md:col-span-3" placeholder="Note" bind:value={s.note} />
+          <Input class="md:col-span-2" placeholder="Note" bind:value={s.note} />
+          <Input placeholder="Menu path, e.g. MENU > OPERATION SETTING > TX AUDIO" value={menuText(s)} oninput={(e) => setMenu(s, (e.currentTarget as HTMLInputElement).value)} />
           <Button type="button" variant="ghost" size="sm" onclick={() => remove(s)}>Remove</Button>
         </div>
       {/each}

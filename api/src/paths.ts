@@ -21,5 +21,7 @@ export const paths = {
   migrations: join(ROOT, "drizzle"),
   profileSchema: join(SPEC_DIR, "rigs/profile.schema.json"),
   openapi: join(SPEC_DIR, "rigs/openapi.yaml"),
+  catAllowlist: join(SPEC_DIR, "rigs/cat-allowlist.json"),
+  checkVectors: join(SPEC_DIR, "rigs/examples/check-vectors.json"),
   examples: join(SPEC_DIR, "rigs/examples") + "/",
 };

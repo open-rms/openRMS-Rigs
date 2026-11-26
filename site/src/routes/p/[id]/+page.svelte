@@ -121,7 +121,7 @@
                     {#each auto as s}
                       {@const src = doc.steps.find((d) => d.id === s.id)}
                       <Table.Row>
-                        <Table.Cell><div class="font-medium">{s.name}{@render refs(src?.sources, src?.confidence)}</div>{#if src?.note}<div class="text-muted-foreground max-w-md text-xs">{src.note}</div>{/if}</Table.Cell>
+                        <Table.Cell><div class="font-medium">{s.name}{@render refs(src?.sources, src?.confidence)}</div>{#if src?.menu?.length}<div class="text-muted-foreground max-w-md font-mono text-xs" title="Where to find it on the radio">{src.menu.join(" > ")}</div>{/if}{#if src?.note}<div class="text-muted-foreground max-w-md text-xs">{src.note}</div>{/if}</Table.Cell>
                         <Table.Cell>{s.check_only ? `check${expectText(src?.expect) ? `: ${expectText(src?.expect)}` : ""}` : src?.display ?? (src?.cat?.values?.[String(src?.value)] ? `${src.cat.values[String(src.value)]} (${src.value})` : show(src?.value))}{#if src?.passband_hz}, {src.passband_hz} Hz{/if}</Table.Cell>
                         <Table.Cell class="space-x-1 whitespace-nowrap">
                           {#if s.safety === "tx"}<Badge variant="destructive">TX</Badge>{/if}

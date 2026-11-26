@@ -17,6 +17,8 @@ export type Step = {
   firmware?: string;
   cat?: Cat;
   manual?: { menu: string; value: string; image?: string };
+  /** Where the setting lives in the radio's own menus, outermost first. */
+  menu?: string[];
   note?: string;
   sources?: string[];
   confidence?: "high" | "medium" | "low";

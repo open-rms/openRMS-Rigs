@@ -91,7 +91,7 @@ Requirements adopted from peer projects (2026-11-25):
 
 ## Open questions
 
-- **Q1:** The CAT allow-list (`safety.ts`) covers common Kenwood/Yaesu/Elecraft settings families and
+- **Q1:** The CAT allow-list (Spec `rigs/cat-allowlist.json`, shared with rigctlWeb) covers common Kenwood/Yaesu/Elecraft settings families and
   Icom 04/06/11/14/15/16/1A. Should it grow per backend from vendor CAT references, and should
   some families (EX menus) be restricted per model to known item numbers?
 - **Q2:** CI-V framing. Clients add `FE FE <radio> <ctrl> … FD`. Should profiles carry the

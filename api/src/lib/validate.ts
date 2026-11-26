@@ -7,7 +7,7 @@ import addFormatsImport from "ajv-formats";
 import { parse as parseYaml } from "yaml";
 import { findRig } from "./catalog.js";
 import type { Profile, Scalar, Step } from "./profile.js";
-import { CAT_VALUE, catProblem, HAMLIB_NAME, isKeyingFunc, METER_LEVELS, MODE_NAME, sampleOf, SETTABLE_FUNCS, TX_FUNCS, TX_LEVELS } from "./safety.js";
+import { CAT_VALUE, catProblem, catSafety, HAMLIB_NAME, isKeyingFunc, METER_LEVELS, MODE_NAME, sampleOf, SETTABLE_FUNCS, TX_FUNCS, TX_LEVELS } from "./safety.js";
 import { fillCat } from "./plan.js";
 
 export const schemaPath = paths.profileSchema;
@@ -130,12 +130,12 @@ function checkStep(s: Step, at: (f?: string) => string, errors: Issue[], warning
         break;
       }
       // Check the shape of each command, and the command actually rendered with this value.
-      const commands: [string, string][] = [];
+      const commands: ["read" | "set", string][] = [];
       if (c.read) commands.push(["read", c.read]);
       if (c.set) commands.push(["set", sampleOf(c.set)]);
       if (c.set && s.value !== undefined) commands.push(["set", fillCat(c.set, s.value)]);
       if (c.set && /\{(?!value(:\d+)?\})/.test(c.set)) commands.push(["set", "{"]);
-      const bad = commands.map(([f, cmd]) => [f, catProblem(c.protocol, cmd)] as const).find(([, p]) => p);
+      const bad = commands.map(([f, cmd]) => [f, catProblem(c.protocol, cmd, f)] as const).find(([, p]) => p);
       if (bad) {
         errors.push({ path: at(`/cat/${bad[0]}`), message: `${bad[1]}. Raw CAT is limited to settings that can't key, tune or send.` });
         break;
@@ -147,6 +147,7 @@ function checkStep(s: Step, at: (f?: string) => string, errors: Issue[], warning
       if (c.reply) {
         try { new RegExp(c.reply); } catch { errors.push({ path: at("/cat/reply"), message: "cat.reply is not a valid regular expression" }); }
       }
+      if (settable && c.set && catSafety(c.protocol, sampleOf(c.set)) === "tx") raise();
       if (!c.read) warnings.push({ path: at("/cat/read"), message: "without cat.read this step can't be checked or restored" });
       if (rig && rig.mfg === "Icom" && c.protocol !== "civ") warnings.push({ path: at("/cat/protocol"), message: "Icom radios use CI-V" });
       break;

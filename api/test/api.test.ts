@@ -137,6 +137,13 @@ describe("api", () => {
     const mine = j.profiles.find((p: any) => p.id === id);
     expect(mine.revision).toBe(1);
     expect(mine.document.steps.find((s: any) => s.id === "power").value).toBe(0.35);
+    expect(mine.plan.steps.find((s: any) => s.id === "power")).toMatchObject({ safety: "tx", readable: true });
+  });
+
+  it("dump ETag is stable until something changes", async () => {
+    const r1 = await app.request("/api/v1/dump.json");
+    const etag = r1.headers.get("etag")!;
+    expect((await app.request("/api/v1/dump.json", { headers: { "If-None-Match": etag } })).status).toBe(304);
   });
 });
 

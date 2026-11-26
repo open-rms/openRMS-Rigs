@@ -19,7 +19,8 @@ PostgreSQL (own database `openrms_rigs`), Hamlib (`rigctl`, catalog build only).
 > - **openRMS-Accounts:** `api/` depends on `@openrms/service-auth` through
 >   `link:../../openRMS-Accounts/packages/service-auth`, so `pnpm install` fails without it.
 > - **openRMS-Spec** ([github.com/open-rms/openRMS-Spec](https://github.com/open-rms/openRMS-Spec)):
->   the API reads the profile schema and OpenAPI document from it at startup and **won't start
+>   the API reads the profile schema, the raw-CAT allow-list and the OpenAPI document from it
+>   at startup, and the tests run its check vectors. It **won't start
 >   without it**. Override the location with `OPENRMS_SPEC_DIR`.
 
 ## Layout
@@ -89,7 +90,8 @@ Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local 
 
 - **No keying, ever.** The validator rejects keying functions (VOX, SBKIN, FBKIN, TBURST,
   TUNER, SEND_*). Functions are an allow-list that matches rigctlWeb's v1. Raw CAT is an
-  allow-list of settings command families per protocol, checked on the rendered command, and
+  allow-list of settings command families per protocol, loaded from Spec
+  `rigs/cat-allowlist.json` (rigctlWeb enforces the same file), checked on the rendered command, and
   values are numbers or plain identifiers, so nothing can smuggle in a second command.
   `buildPlan` also refuses any multi-line command (`src/lib/safety.ts`). Steps that change
   transmit behaviour are marked `safety: tx`.

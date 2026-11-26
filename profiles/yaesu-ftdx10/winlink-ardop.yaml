@@ -99,6 +99,10 @@ steps:
 - id: data-mod-source
   kind: cat
   name: DATA MOD SOURCE
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - DATA MOD SOURCE
   value: 1
   safety: tx
   cat:
@@ -120,6 +124,10 @@ steps:
 - id: rear-select
   kind: cat
   name: REAR SELECT
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - REAR SELECT
   value: 1
   safety: tx
   cat:
@@ -143,6 +151,10 @@ steps:
 - id: rport-gain
   kind: cat
   name: RPORT GAIN
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - RPORT GAIN
   value: 50
   expect:
     min: 30
@@ -168,6 +180,10 @@ steps:
 - id: data-shift
   kind: cat
   name: DATA SHIFT (SSB)
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - DATA SHIFT (SSB)
   value: 1500
   cat:
     protocol: ascii
@@ -185,6 +201,10 @@ steps:
 - id: data-out-level
   kind: cat
   name: DATA OUT LEVEL
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - DATA OUT LEVEL
   check_only: true
   cat:
     protocol: ascii
@@ -201,6 +221,10 @@ steps:
 - id: tx-bpf
   kind: cat
   name: TX BPF SEL
+  menu:
+  - RADIO SETTING
+  - MODE PSK/DATA
+  - TX BPF SEL
   check_only: true
   expect:
     one_of:

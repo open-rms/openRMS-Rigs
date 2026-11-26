@@ -99,7 +99,16 @@ publicRoutes.get("/dump.json", async (c) => {
     .where(publicWhere())
     .orderBy(asc(schema.profile.id));
   cacheable(c, 900);
-  return c.json({ generated_at: new Date().toISOString(), license: "CC-BY-SA-4.0", profiles: rows.map((r) => envelope(r.p, r.d)) });
+  // generated_at is the newest change to a published profile, not the request time, so the body
+  // (and its ETag) stay the same until something changes and If-None-Match gets a 304.
+  const newest = rows.reduce((m, r) => Math.max(m, new Date(r.p.updatedAt).getTime()), 0);
+  const planOf = (r: (typeof rows)[number]) => {
+    try { return buildPlan(r.d as Profile, { id: r.p.id, revision: r.p.publishedRevision ?? undefined }); } catch { return null; }
+  };
+  return c.json({
+    generated_at: new Date(newest).toISOString(), license: "CC-BY-SA-4.0",
+    profiles: rows.map((r) => ({ ...envelope(r.p, r.d), plan: planOf(r) })),
+  });
 });
 
 async function loadVisible(c: Context<MaybeAuthEnv>, id: string) {
