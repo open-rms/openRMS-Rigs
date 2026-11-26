@@ -1,0 +1,36 @@
+// Types for openRMS-Spec/rigs/profile.schema.json (kept in step with it; the schema is the contract).
+export type Scalar = number | boolean | string;
+export type Expect = { min?: number; max?: number; one_of?: Scalar[]; not?: Scalar[] };
+export type Cat = { protocol: "ascii" | "civ"; read?: string; reply?: string; set?: string; values?: Record<string, string> };
+export type Step = {
+  id: string;
+  kind: "mode" | "level" | "func" | "parm" | "cat" | "manual";
+  name: string;
+  value?: Scalar;
+  passband_hz?: number;
+  expect?: Expect;
+  check_only?: boolean;
+  safety?: "rx" | "tx";
+  unit?: string;
+  display?: string;
+  hamlib?: string;
+  firmware?: string;
+  cat?: Cat;
+  manual?: { menu: string; value: string; image?: string };
+  note?: string;
+};
+export type Profile = {
+  schema: "openrms-rigs/profile/v1";
+  title: string;
+  summary?: string;
+  rig: { macro: string; hamlib_model: number; mfg: string; name: string; firmware?: string };
+  operation: string;
+  connection: string;
+  interface?: string;
+  hamlib: string;
+  audio?: { rx_target_dbfs?: number; rx_note?: string; tx_note?: string };
+  steps: Step[];
+  software?: { app: string; setting: string; value: string; note?: string }[];
+  notes?: string;
+  tags?: string[];
+};
