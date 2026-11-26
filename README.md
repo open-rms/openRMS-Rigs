@@ -72,6 +72,17 @@ Defaults are local; a deployment sets both to its own URLs. Tests don't need Acc
 Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local Hamlib (about
 4 s for 322 models). Keep older catalogs; `GET /rigs?hamlib=` selects one.
 
+## Configuration
+
+- `HOST` (default `127.0.0.1`) and `PORT` (default 8790): keep `HOST=127.0.0.1` with the reverse
+  proxy on the same host; use `0.0.0.0` only when the proxy runs elsewhere.
+- `DATABASE_URL`: the only database setting. A Unix socket works too, e.g.
+  `postgresql://openrms_rigs@/openrms_rigs?host=/var/run/postgresql`. For remote servers, use
+  `sslmode=verify-full`.
+- `PUBLIC_URL`, `OPENRMS_AUDIENCE`, `OPENRMS_ISSUER`, `SITE_ORIGINS`: see `api/.env.example`.
+  The defaults are localhost; set production addresses through the environment.
+- `OPENRMS_SPEC_DIR`: path to the openRMS-Spec checkout (default `../../openRMS-Spec`).
+
 ## Rules worth knowing
 
 - **No keying, ever.** The validator rejects keying functions (VOX, SBKIN, FBKIN, TBURST,
