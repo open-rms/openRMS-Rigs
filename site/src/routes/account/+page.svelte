@@ -8,6 +8,23 @@
   import { Input } from "#lib/components/ui/input/index.ts";
 
   let mine = $state<Envelope[]>([]);
+  // "Your profiles" grouped by radio, collapsed until the radio's card is clicked.
+  let open = $state<Record<string, boolean>>({});
+  let rigNames = $state<Record<string, string>>({});
+  const groups = $derived.by(() => {
+    const m = new Map<string, Envelope[]>();
+    for (const p of mine) m.set(p.rig_macro, [...(m.get(p.rig_macro) ?? []), p]);
+    return [...m].map(([macro, profiles]) => ({ macro, profiles })).sort((a, b) => (rigNames[a.macro] ?? a.macro).localeCompare(rigNames[b.macro] ?? b.macro));
+  });
+  $effect(() => {
+    for (const g of groups) {
+      if (rigNames[g.macro] === undefined) {
+        rigNames[g.macro] = g.macro.replace(/^RIG_MODEL_/, "");
+        api.rig(g.macro).then((r) => (rigNames[g.macro] = `${r.mfg} ${r.name}`)).catch(() => {});
+      }
+    }
+  });
+  const pendingIn = (ps: Envelope[]) => ps.filter((p) => p.status !== "published" || p.current_revision !== p.published_revision).length;
   let queue = $state<Envelope[]>([]);
   let dev = $state("");
   $effect(() => {
@@ -49,7 +66,21 @@
   </div>
   <p class="text-muted-foreground -mt-4 mb-6 text-xs">One openRMS account for every openRMS app. Signing out here signs you out of all of them.</p>
   <h2 class="mb-2 text-lg font-medium">Your profiles</h2>
-  <div class="mb-8 grid gap-3 sm:grid-cols-2">{#each mine as p (p.id)}<ProfileCard {p} />{:else}<p class="text-muted-foreground">None yet. <a href="/submit">Submit one.</a></p>{/each}</div>
+  <div class="mb-8 space-y-3">
+    {#each groups as g (g.macro)}
+      {@const pending = pendingIn(g.profiles)}
+      <Card.Root>
+        <button type="button" class="flex w-full items-center gap-3 px-6 py-4 text-left" aria-expanded={!!open[g.macro]} onclick={() => (open[g.macro] = !open[g.macro])}>
+          <span class="text-muted-foreground w-4 text-xs">{open[g.macro] ? "▾" : "▸"}</span>
+          <span class="flex-1 font-medium">{rigNames[g.macro] ?? g.macro}</span>
+          <span class="text-muted-foreground text-sm">{g.profiles.length} profile{g.profiles.length === 1 ? "" : "s"}{pending ? ` · ${pending} awaiting review` : ""}</span>
+        </button>
+        {#if open[g.macro]}
+          <Card.Content class="grid gap-3 sm:grid-cols-2">{#each g.profiles as p (p.id)}<ProfileCard {p} />{/each}</Card.Content>
+        {/if}
+      </Card.Root>
+    {:else}<p class="text-muted-foreground">None yet. <a href="/submit">Submit one.</a></p>{/each}
+  </div>
   <h2 id="keys" class="mb-2 text-lg font-medium">API keys</h2>
   <p class="text-muted-foreground mb-3 max-w-3xl text-sm">For apps and scripts that submit profiles as you, e.g. <code>RIGS_KEY=… pnpm import-profiles</code>. Keys can submit and edit profiles; they can't star, comment, report or moderate. Profiles submitted with a key go to the review queue.</p>
   {#if newKey}
