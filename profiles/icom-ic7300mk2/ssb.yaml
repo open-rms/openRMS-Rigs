@@ -29,6 +29,9 @@ steps:
 - id: mic-gain
   kind: level
   name: MICGAIN
+  menu:
+  - MULTI knob
+  - MIC GAIN
   value: 0.5
   unit: fraction
   display: 50%

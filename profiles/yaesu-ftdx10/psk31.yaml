@@ -28,6 +28,9 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - Touch panel
+  - AGC
   value: 6
   expect:
     not:
@@ -43,57 +46,86 @@ steps:
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   sources:
+  - S1
   - S3
   confidence: medium
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - DNR key
   value: false
   note: DNR off.
   sources:
+  - S1
   - S3
   confidence: medium
 - id: anf-off
   kind: func
   name: ANF
+  menu:
+  - FUNC knob
+  - DNF
   value: false
   note: DNF off.
   sources:
+  - S1
   - S3
   confidence: medium
 - id: notch-off
   kind: func
   name: MN
+  menu:
+  - Front panel
+  - NOTCH key
   value: false
   sources:
+  - S1
   - S3
   confidence: medium
 - id: apf-off
   kind: func
   name: APF
+  menu:
+  - Front panel
+  - CONT/APF key
   value: false
   note: CONTOUR/APF off.
   sources:
+  - S1
   - S3
   confidence: medium
 - id: comp-off
   kind: func
   name: COMP
+  menu:
+  - FUNC knob
+  - PROC LEVEL (fully left = OFF)
   value: false
   safety: tx
   sources:
+  - S1
   - S7
   confidence: medium
 - id: power
   kind: level
   name: RFPOWER
+  menu:
+  - FUNC knob
+  - RF POWER
   value: 0.5
   unit: fraction
   display: ~50 W
   safety: tx
   note: Digital modes run at a high duty cycle; derate to what your station sustains.
+  sources:
+  - S1
   confidence: low
 - id: data-mod-source
   kind: cat

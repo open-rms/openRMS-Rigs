@@ -31,22 +31,30 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - FUNCTION
+  - AGC (touch to cycle FAST/MID/SLOW)
   value: 5
   display: MID
   note: MID. QST found SLOW (6 s) recovers very slowly on SSB. Icom suggests FAST for weak signals next
     to strong ones.
   sources:
+  - S1
   - S16
   confidence: medium
 - id: mic-gain
   kind: level
   name: MICGAIN
+  menu:
+  - MULTI knob
+  - MIC GAIN
   value: 0.5
   unit: fraction
   display: 50%
   safety: tx
   note: Start at 50%, then set so ALC reads 30–50% (Icom's procedure).
   sources:
+  - S1
   - S15
   - S18
   - S19
@@ -54,16 +62,23 @@ steps:
 - id: comp-off
   kind: func
   name: COMP
+  menu:
+  - FUNCTION
+  - COMP
   value: false
   safety: tx
   note: Off as a baseline; switch it on by hand when you want punch. Icom advises COMP off when driving
     an external amplifier, to avoid overshoot.
   sources:
+  - S1
   - S16
   confidence: medium
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   note: Off as a baseline. QST and Farson rate the noise blanker highly; defaults LEVEL 50%, DEPTH 8,
     WIDTH 50.
@@ -74,9 +89,13 @@ steps:
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - NR key
   value: false
   note: Off as a baseline; Farson found level 6 a good working setting.
   sources:
+  - S1
   - S18
   confidence: low
 - id: comp-level

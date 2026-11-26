@@ -30,6 +30,9 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - Touch panel
+  - AGC
   value: 6
   expect:
     not:
@@ -44,6 +47,9 @@ steps:
 - id: mic-gain
   kind: level
   name: MICGAIN
+  menu:
+  - FUNC knob
+  - MIC GAIN
   value: 0.3
   unit: fraction
   display: '30'
@@ -57,6 +63,9 @@ steps:
 - id: proc-off
   kind: func
   name: COMP
+  menu:
+  - FUNC knob
+  - PROC LEVEL (fully left = OFF)
   value: false
   safety: tx
   note: The speech processor is for tough conditions, not normal QSOs (Yaesu). When you do use it, keep
@@ -68,6 +77,9 @@ steps:
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   note: Off by default. When needed, keep the level modest; it distorts when turned up high.
   sources:
@@ -77,6 +89,9 @@ steps:
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - DNR key
   value: false
   note: DNR off by default. Use a modest level; higher levels add artifacts.
   sources:

@@ -23,10 +23,14 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - FUNCTION
+  - AGC (touch to cycle FAST/MID/SLOW)
   value: 5
   display: MID
   note: MID, or FAST under selective fading.
   sources:
+  - S1
   - S18
   confidence: medium
 - id: carrier

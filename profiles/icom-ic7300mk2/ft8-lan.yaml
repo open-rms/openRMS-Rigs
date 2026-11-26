@@ -23,13 +23,21 @@ steps:
 - id: comp-off
   kind: func
   name: COMP
+  menu:
+  - FUNCTION
+  - COMP
   value: false
   safety: tx
-  note: No speech processing on data. General practice; no MK2 source states it.
+  note: No speech processing on data. General practice; no MK2 source states it. S1 (the manual) gives only the menu path.
+  sources:
+  - S1
   confidence: low
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   sources:
   - S1
@@ -37,6 +45,9 @@ steps:
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - NR key
   value: false
   sources:
   - S1

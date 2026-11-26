@@ -25,6 +25,9 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - Touch panel
+  - AGC
   value: 6
   expect:
     not:
@@ -52,6 +55,9 @@ steps:
 - id: apf-off
   kind: func
   name: APF
+  menu:
+  - Front panel
+  - CONT/APF key
   value: false
   note: Audio peak filter off by default; switch it on under QRM.
   sources:

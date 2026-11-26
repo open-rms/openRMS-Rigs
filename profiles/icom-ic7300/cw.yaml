@@ -28,6 +28,12 @@ steps:
 - id: keyer-type
   kind: parm
   name: KEYERTYPE
+  menu:
+  - MENU
+  - KEYER
+  - EDIT/SET
+  - CW-KEY SET
+  - Key Type
   value: PADDLE
   note: The default; use STRAIGHT with an external keyer.
   sources:

@@ -29,32 +29,49 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - FUNCTION
+  - AGC (touch to cycle FAST/MID/SLOW)
   value: 2
   display: FAST
   note: FAST, with USB AF output around 40%. VK3FS runs AGC OFF with a much lower AF output (10–30%),
     and the WSJT-X guide says 'AGC off or reduce RF gain'. A TAPR test found AGC on costs FT8/WSPR little
     dynamic range.
   sources:
+  - S1
   - S8
   - S12
   confidence: medium
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   sources:
+  - S1
   - S4
   confidence: medium
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - NR key
   value: false
   sources:
+  - S1
   - S4
   confidence: medium
 - id: usb-af
   kind: level
   name: USB_AF
+  menu:
+  - MENU
+  - SET
+  - Connectors
+  - ACC/USB AF Output Level
   value: 0.4
   unit: fraction
   display: 40%
@@ -64,6 +81,7 @@ steps:
   note: 'ACC/USB AF Output Level: the receive audio to the computer. 40% with AGC FAST; 10–30% if you
     run AGC OFF. Sources range widely (default 50%).'
   sources:
+  - S1
   - S4
   - S8
   confidence: medium

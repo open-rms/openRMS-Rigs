@@ -30,23 +30,36 @@ steps:
 - id: power
   kind: level
   name: RFPOWER
+  menu:
+  - MULTI knob
+  - RF POWER
   value: 0.5
   unit: fraction
   display: ~50 W
   safety: tx
   note: No MK2 source settles FT8 power. FT8 transmits for about 13 s at a time; choose what your station
-    can sustain.
+    can sustain. S1 (the manual) gives only the menu path.
+  sources:
+  - S1
   confidence: low
 - id: comp-off
   kind: func
   name: COMP
+  menu:
+  - FUNCTION
+  - COMP
   value: false
   safety: tx
-  note: No speech processing on data. General practice; no MK2 source states it.
+  note: No speech processing on data. General practice; no MK2 source states it. S1 (the manual) gives only the menu path.
+  sources:
+  - S1
   confidence: low
 - id: nb-off
   kind: func
   name: NB
+  menu:
+  - Front panel
+  - NB key
   value: false
   note: Noise blanker distorts strong FT8 signals.
   sources:
@@ -56,6 +69,9 @@ steps:
 - id: nr-off
   kind: func
   name: NR
+  menu:
+  - Front panel
+  - NR key
   value: false
   sources:
   - S1

@@ -24,6 +24,9 @@ steps:
 - id: agc
   kind: level
   name: AGC
+  menu:
+  - Touch panel
+  - AGC
   value: 6
   expect:
     not:
