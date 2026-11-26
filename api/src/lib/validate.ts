@@ -47,6 +47,14 @@ export function validateProfile(input: unknown): Result {
     }
   }
 
+  const sourceIds = new Set<string>();
+  (p.sources ?? []).forEach((s, i) => {
+    if (sourceIds.has(s.id)) errors.push({ path: `/sources/${i}/id`, message: `duplicate source id "${s.id}"` });
+    sourceIds.add(s.id);
+  });
+  p.steps.forEach((s, i) => (s.sources ?? []).forEach((ref, j) => {
+    if (!sourceIds.has(ref)) errors.push({ path: `/steps/${i}/sources/${j}`, message: `cites ${ref}, which isn't in sources` });
+  }));
   const seen = new Set<string>();
   p.steps.forEach((s, i) => {
     const at = (f = "") => `/steps/${i}${f}`;

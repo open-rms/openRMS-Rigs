@@ -1,0 +1,262 @@
+schema: openrms-rigs/profile/v1
+title: IC-7300MK2 FT8/FT4 over USB-C (WSJT-X)
+summary: One USB-C cable for audio and CAT. Built from Icom's MK2 manuals plus MK2 setup guides; IC-7300
+  values only where they still apply.
+rig:
+  macro: RIG_MODEL_IC7300MK2
+  hamlib_model: 3094
+  mfg: Icom
+  name: IC-7300MK2
+operation: ft8
+connection: usb
+interface: built-in USB codec (USB-C)
+hamlib: '>=4.7'
+audio:
+  rx_target_dbfs: -25
+  rx_note: Aim for about 30 dB on WSJT-X's receive meter on a quiet band. Lower USB AF Output Level if
+    it clips.
+  tx_note: Set output power on the radio; keep ALC low by adjusting USB MOD Level and WSJT-X's Pwr slider.
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: USB-D. FIL1 is 3.0 kHz by default (adjustable to 3.6 kHz).
+  sources:
+  - S1
+  - S8
+  confidence: high
+- id: power
+  kind: level
+  name: RFPOWER
+  value: 0.5
+  unit: fraction
+  display: ~50 W
+  safety: tx
+  note: No MK2 source settles FT8 power. FT8 transmits for about 13 s at a time; choose what your station
+    can sustain.
+  confidence: low
+- id: comp-off
+  kind: func
+  name: COMP
+  value: false
+  safety: tx
+  note: No speech processing on data.
+  sources:
+  - S8
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  value: false
+  note: Noise blanker distorts strong FT8 signals.
+  sources:
+  - S1
+  - S8
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  value: false
+  sources:
+  - S1
+  - S8
+  confidence: medium
+- id: usb-af
+  kind: level
+  name: USB_AF
+  value: 0.3
+  unit: fraction
+  display: 30%
+  expect:
+    min: 0.1
+    max: 0.5
+  note: USB receive audio to the computer. Factory default 50%; 10–30% is common. Hamlib's MK2 support
+    is Beta.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S8
+  confidence: medium
+- id: usb-af-select
+  kind: manual
+  name: USB AF output select
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > Output Select
+    value: AF (default)
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: usb-af-sql
+  kind: manual
+  name: USB AF SQL
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF SQL
+    value: OFF (Open, default)
+  note: With squelch on, WSJT-X hears nothing between signals.
+  sources:
+  - S1
+  - S8
+  confidence: medium
+- id: usb-mod
+  kind: manual
+  name: USB MOD Level
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > USB MOD Level
+    value: 50% (default)
+  note: Adjust together with WSJT-X's Pwr slider for low ALC.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S8
+  confidence: medium
+- id: data-mod
+  kind: manual
+  name: DATA MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA MOD
+    value: USB (default)
+  sources:
+  - S1
+  - S5
+  - S8
+  confidence: high
+- id: data-off-mod
+  kind: manual
+  name: DATA OFF MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA OFF MOD
+    value: MIC,USB (default)
+  note: Defaults changed from the IC-7300 (MIC,ACC).
+  sources:
+  - S1
+  confidence: medium
+- id: usb-send
+  kind: manual
+  name: USB SEND / USB Keying
+  manual:
+    menu: MENU » SET > Connectors > USB SEND/Keying
+    value: OFF (default)
+  note: WSJT-X keys the radio over CAT. Leaving RTS/DTR keying off stops the radio keying when the port
+    opens.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: civ-address
+  kind: manual
+  name: CI-V Address
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Address
+    value: B6h
+  note: The IC-7300 used 94h. Software set for an IC-7300 won't find the MK2.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S6
+  confidence: high
+- id: civ-transceive
+  kind: manual
+  name: CI-V Transceive
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Transceive
+    value: ON (default)
+  note: POTACAT's guide uses OFF; Icom's default and RemoteTx use ON.
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: civ-echo
+  kind: manual
+  name: CI-V USB (A) Echo Back
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB (A) Echo Back
+    value: OFF (default)
+  note: Older IC-7300 guides say ON; that item was split into (A) and (B) on the MK2.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: medium
+- id: tbw-data
+  kind: manual
+  name: TX bandwidth (SSB-D)
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB-D > TBW
+    value: 300–2700 Hz (default)
+  sources:
+  - S1
+  confidence: high
+software:
+- app: wsjt-x
+  setting: Radio > Rig
+  value: Icom IC-7300MK2 (needs Hamlib 4.7 or newer)
+  note: 'Not ''Icom IC-7300'': the CI-V commands differ [S7].'
+- app: wsjt-x
+  setting: Radio > PTT method
+  value: CAT
+- app: wsjt-x
+  setting: Radio > Mode
+  value: Data/Pkt
+- app: wsjt-x
+  setting: Radio > Split operation
+  value: Rig or None
+  note: Sources disagree and none tested the MK2 [S7] [S8].
+- app: wsjt-x
+  setting: Audio > Input / Output
+  value: USB Audio CODEC (the radio)
+notes: |-
+  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
+  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
+  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
+  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+
+  Not settled by any source: AGC for FT8 on the MK2 (one IC-7300 guide runs it OFF [S8]; our FT-DX10 testing found OFF clips USB audio) and the best
+  FT8 power. Firmware 1.03 was current when this was written [S3].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7300MK2 Basic Manual
+  author: Icom Inc.
+  url: https://www.icomamerica.com/support/manual/4508/
+  date: '2026'
+- id: S3
+  title: IC-7300MK2 product page
+  author: Icom America
+  url: https://icomamerica.com/lineup/products/IC-7300MK2/
+- id: S4
+  title: Icom 7300MK2 Quick Start
+  author: RemoteTx
+  url: https://www.remotetx.net/icom-7300mk2-quick-start/
+  date: '2026'
+- id: S5
+  title: Icom IC-7300 & Family (IC-7300 / Mk II)
+  author: POTACAT Users Guide
+  url: https://docs.potacat.com/nested/rig-ic-7300.html
+- id: S6
+  title: IC-7300mk2 (forum thread)
+  author: 'wfview forum: phil, W6EL, K6US and others'
+  url: https://forum.wfview.org/t/ic-7300mk2/4597
+  date: 2025-12 to 2026-02
+- id: S7
+  title: Rig control error from WSJT-X with new IC-7300MK2
+  author: 'Hamlib-developer list: KG8OM, N3GB'
+  url: https://sourceforge.net/p/hamlib/mailman/message/59306165
+  date: 2026-03
+- id: S8
+  title: Icom IC-7300 Digital setup for WSJT-X (IC-7300 source)
+  author: Andrew VK3FS
+  url: https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/
+  date: 2021-12

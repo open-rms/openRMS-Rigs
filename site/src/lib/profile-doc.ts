@@ -49,6 +49,7 @@ export function fromText(text: string): ProfileDoc {
   d.steps = Array.isArray(v.steps) ? v.steps : [];
   d.software = Array.isArray(v.software) ? v.software : [];
   d.tags = Array.isArray(v.tags) ? v.tags : [];
+  d.sources = Array.isArray(v.sources) ? v.sources : [];
   return d;
 }
 

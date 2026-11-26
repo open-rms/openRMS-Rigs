@@ -57,7 +57,7 @@ async function principalFrom(c: Context): Promise<Principal | null> {
     if (!row) return null;
     await db.update(schema.apiKey).set({ lastUsedAt: new Date() }).where(eq(schema.apiKey.id, row.id));
     // Keys carry no fresh claims: only the owner's sub. Moderation needs a token.
-    return { sub: row.ownerSub, callsignVerified: false, role: "user", via: "key", keyKind: row.kind };
+    return { sub: row.ownerSub, callsign: row.ownerCallsign ?? undefined, callsignVerified: false, role: "user", via: "key", keyKind: row.kind };
   }
   if (!bearer) return null;
   try {

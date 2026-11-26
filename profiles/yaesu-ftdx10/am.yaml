@@ -1,0 +1,108 @@
+schema: openrms-rigs/profile/v1
+title: FT-DX10 AM phone
+summary: AM with Yaesu's carrier limit and full TX bandwidth.
+rig:
+  macro: RIG_MODEL_FTDX10
+  hamlib_model: 1042
+  mfg: Yaesu
+  name: FTDX-10
+operation: am
+connection: usb
+interface: stock SSM-75E hand mic
+hamlib: '>=4.6'
+audio:
+  tx_note: Check your AM audio with the monitor before going on air (Yaesu).
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: AM
+  passband_hz: 0
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: 'AUTO: the radio picks SLOW for SSB/AM and FAST for CW. Yaesu advises leaving the AGC delay menus
+    alone.'
+  sources:
+  - S1
+  - S11
+  confidence: high
+- id: am-max-power
+  kind: manual
+  name: AM MAX POWER
+  safety: tx
+  manual:
+    menu: OPERATION SETTING > TX GENERAL > AM MAX POWER
+    value: 25 W (maximum carrier)
+  note: Range 5–25 W. The carrier limit protects the final from AM's peaks.
+  sources:
+  - S1
+  confidence: high
+- id: tx-bpf-am
+  kind: manual
+  name: TX BPF SEL (AM)
+  safety: tx
+  manual:
+    menu: RADIO SETTING > MODE AM > TX BPF SEL
+    value: 50-3050 (default)
+  sources:
+  - S1
+  - S11
+  confidence: high
+- id: mic-gain-am
+  kind: manual
+  name: MIC GAIN (AM)
+  safety: tx
+  manual:
+    menu: RADIO SETTING > MODE AM > MIC GAIN
+    value: 'MCVR (default: follows the front-panel MIC GAIN)'
+  sources:
+  - S1
+  confidence: high
+- id: ipo
+  kind: manual
+  name: IPO / preamp
+  manual:
+    menu: IPO (touch panel)
+    value: AMP1 normally; IPO (no preamp) on the low bands or with strong signals
+  note: Sherwood measured AMP1 at about +9 dB and AMP2 at about +18 dB. Try IPO before ATT.
+  sources:
+  - S1
+  - S10
+  - S11
+  confidence: high
+notes: |-
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
+  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
+  Not yet confirmed on air by an openRMS user.
+
+  The speech processor works on SSB only [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FTDX10 Operation Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/19.pdf
+  date: '2021'
+  note: Mirror copy of Yaesu's manual.
+- id: S10
+  title: 'Sherwood Engineering HF test results: FTdx10 (with CQWW 160 CW notes)'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/n9ewo/sher_ftdx10.pdf
+  date: 2020-12
+- id: S11
+  title: Basic one-time settings, SSB operation and CW operation on the Yaesu FTDX-10 (three articles)
+  author: LZ3AI
+  url: https://www.galanto.com/en/osnovni-ednokratni-nastroyki-na-yaesu-ftdx-10/
+  date: 2025-09
+  note: See also /en/operativna-rabota-na-ssb/ and /en/operativna-rabota-na-cw/ on the same site.

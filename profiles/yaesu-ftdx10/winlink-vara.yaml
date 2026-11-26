@@ -1,0 +1,306 @@
+schema: openrms-rigs/profile/v1
+title: FT-DX10 Winlink over VARA HF
+summary: Winlink over VARA HF with the FT-DX10's USB codec and CAT through rigctld. Includes the AGC finding
+  from on-air testing.
+rig:
+  macro: RIG_MODEL_FTDX10
+  hamlib_model: 1042
+  mfg: Yaesu
+  name: FTDX-10
+operation: winlink-vara
+connection: usb
+interface: built-in USB codec
+hamlib: '>=4.6'
+audio:
+  rx_target_dbfs: -25
+  rx_note: Band noise around -25 dBFS with no clipping on strong stations (hamstack testing).
+  tx_note: No ALC. ARDOP and VARA aren't constant-envelope; keep drive below the point where ALC moves.
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: DATA-U.
+  sources:
+  - S1
+  - S9
+  confidence: medium
+- id: agc
+  kind: level
+  name: AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: AUTO (picks MID in DATA-U). AGC OFF clipped the USB receive audio in two independent tests. The
+    WSJT-X guide's general advice to run AGC off doesn't suit this radio.
+  sources:
+  - S1
+  - S5
+  - S9
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  value: false
+  sources:
+  - S3
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  value: false
+  note: DNR off.
+  sources:
+  - S3
+  confidence: medium
+- id: anf-off
+  kind: func
+  name: ANF
+  value: false
+  note: DNF off.
+  sources:
+  - S3
+  confidence: medium
+- id: notch-off
+  kind: func
+  name: MN
+  value: false
+  sources:
+  - S3
+  confidence: medium
+- id: apf-off
+  kind: func
+  name: APF
+  value: false
+  note: CONTOUR/APF off.
+  sources:
+  - S3
+  confidence: medium
+- id: comp-off
+  kind: func
+  name: COMP
+  value: false
+  safety: tx
+  sources:
+  - S7
+  confidence: medium
+- id: power
+  kind: level
+  name: RFPOWER
+  value: 0.5
+  unit: fraction
+  display: ~50 W
+  safety: tx
+  note: Winlink sessions transmit in long bursts; derate to what your station sustains.
+  confidence: low
+- id: data-mod-source
+  kind: cat
+  name: DATA MOD SOURCE
+  value: 1
+  safety: tx
+  cat:
+    protocol: ascii
+    read: EX010415;
+    reply: ^EX010415(\d);$
+    set: EX010415{value};
+    values:
+      '0': MIC
+      '1': REAR
+  note: RADIO SETTING > MODE PSK/DATA > DATA MOD SOURCE = REAR (the rear/USB audio path, not the mic).
+  sources:
+  - S1
+  - S2
+  - S3
+  - S4
+  - S9
+  confidence: high
+- id: rear-select
+  kind: cat
+  name: REAR SELECT
+  value: 1
+  safety: tx
+  cat:
+    protocol: ascii
+    read: EX010416;
+    reply: ^EX010416(\d);$
+    set: EX010416{value};
+    values:
+      '0': DATA
+      '1': USB
+  note: RADIO SETTING > MODE PSK/DATA > REAR SELECT = USB. The factory default is DATA (the rear jack),
+    so this must change. The value is high confidence; the EX number comes from Yaesu's CAT chart and
+    wasn't tested on air.
+  sources:
+  - S1
+  - S2
+  - S3
+  - S4
+  confidence: medium
+- id: rport-gain
+  kind: cat
+  name: RPORT GAIN
+  value: 50
+  expect:
+    min: 30
+    max: 70
+  safety: tx
+  cat:
+    protocol: ascii
+    read: EX010417;
+    reply: ^EX010417(\d{3});$
+    set: EX010417{value:03};
+  note: Transmit audio gain from the USB codec. Use 30–70 and keep the computer's output level modest.
+    VE3SMA traced harmonics and wrong-sideband output to a low gain (the PRESET's 10) with the PC turned
+    up.
+  sources:
+  - S1
+  - S3
+  - S4
+  confidence: medium
+- id: data-shift
+  kind: cat
+  name: DATA SHIFT (SSB)
+  value: 1500
+  cat:
+    protocol: ascii
+    read: EX010408;
+    reply: ^EX010408(\d{4});$
+    set: EX010408{value:04};
+  note: Centre of the audio passband, 0000–3000 Hz. 1500 is the factory default.
+  sources:
+  - S1
+  - S2
+  - S3
+  - S4
+  - S9
+  confidence: high
+- id: data-out-level
+  kind: cat
+  name: DATA OUT LEVEL
+  check_only: true
+  cat:
+    protocol: ascii
+    read: EX010413;
+    reply: ^EX010413(\d{3});$
+  note: Check only. Yaesu's manual describes this as the rear RTTY/DATA jack level, not USB audio; sources
+    run it at 0 or 50. The codes are confirmed; the effect on USB audio is not.
+  sources:
+  - S1
+  - S2
+  - S3
+  - S9
+  confidence: low
+- id: tx-bpf
+  kind: cat
+  name: TX BPF SEL
+  check_only: true
+  expect:
+    one_of:
+    - 0
+    - 1
+    - 2
+    - 3
+  cat:
+    protocol: ascii
+    read: EX010414;
+    reply: ^EX010414(\d);$
+    set: EX010414{value};
+    values:
+      '0': 50-3050
+      '1': 100-2900
+      '2': 200-2800
+      '3': 300-2700
+      '4': 400-2600
+  note: Check only. Leave at the 300–2700 default or wider; don't narrow to 400–2600 for wide VARA modes.
+    That advice is inferred, not tested.
+  sources:
+  - S2
+  confidence: low
+- id: width
+  kind: manual
+  name: Receive width
+  manual:
+    menu: WIDTH (and R.FIL 3 kHz)
+    value: 3000 Hz
+  note: So the whole 0–3 kHz audio window reaches the computer.
+  sources:
+  - S3
+  - S4
+  confidence: medium
+- id: cat-rate
+  kind: manual
+  name: CAT RATE
+  manual:
+    menu: OPERATION SETTING > GENERAL > CAT RATE
+    value: 38400 bps
+  note: Change this on the radio, not over CAT (the link drops when the rate changes). Match it in your
+    software.
+  sources:
+  - S3
+  - S4
+  confidence: high
+software:
+- app: rigctld
+  setting: command
+  value: rigctld -m 1042 -s 38400 -r <the radio's CAT port>
+  note: Winlink Express or Pat keys the radio through rigctld or flrig. VARA's own PTT setup for the FT-DX10
+    isn't confirmed by any source read [S8].
+- app: vara
+  setting: Audio devices
+  value: USB AUDIO CODEC (the radio)
+notes: |-
+  Researched from Yaesu's FT-DX10 manuals, setup guides by VE3SMA, VE3SP and M0AWS, and on-air testing with hamstack. Not every value
+  has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Yaesu menu numbers
+  differ between models and firmware; these EX numbers are for the FT-DX10. The menu item names come from the FT-DX10 manual
+  (RPORT GAIN, LCUT/HCUT FREQ); "USB MOD GAIN" is an FTDX101 name.
+
+  No FT-DX10 VARA source could be read, and VARA's occupied bandwidth against TX BPF SEL wasn't confirmed; treat the bandwidth and drive notes as starting points.
+tags:
+- researched
+- unverified
+- winlink
+- emcomm
+sources:
+- id: S1
+  title: FTDX10 Operation Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/19.pdf
+  date: '2021'
+  note: Mirror copy of Yaesu's manual.
+- id: S2
+  title: FTDX10 CAT Operation Reference Manual (rev 2308-F)
+  author: Yaesu Musen
+  url: https://www.yaesu.com/Files/4CB893D7-1018-01AF-FA97E9E9AD48B50C/FTDX10_CAT_OM_ENG_2308-F.pdf
+  date: 2023-08
+  note: Menu chart gives the EX numbers and CAT ranges.
+- id: S3
+  title: List of FTDX10 Settings for FT8/FT4/MSK144 (and FTDX10 Issues and Solutions)
+  author: Steve Kavanagh VE3SMA
+  url: https://www.qsl.net/ve3sma/FTDX10%20FT8%20Settings%20Jan%202%202022v0.3.pdf
+  date: 2022-01
+- id: S4
+  title: WSJT-X Yaesu FTDX10 Setup Guide
+  author: Andre VE3SP
+  url: https://ftdx10.blogspot.com/2021/08/wsjt-x-mac-mini-big-sur-and-yaesu-ftdx10.html
+  date: 2021-08
+- id: S5
+  title: FTDX10, Apple Computers and the USB Audio Chain
+  author: M0AWS
+  url: https://m0aws.co.uk/?p=457
+  date: 2022-02
+- id: S7
+  title: Fldigi Users Manual 4.2 (RX/TX audio levels, RTTY)
+  author: Dave Freese W1HKJ
+  url: https://www.w1hkj.org/FldigiHelp/audio_adjust_page.html
+- id: S8
+  title: 'Pat wiki: Rig control'
+  author: Martin Hebnes Pedersen LA5NTA and Pat contributors
+  url: https://github.com/la5nta/pat/wiki/Rig-control
+- id: S9
+  title: On-air test of an FT-DX10 with Pat and ardopcf (hamstack)
+  author: openRMS / hamstack project
+  date: '2026-11-25'
+  note: AGC OFF clipped USB receive audio; AGC AUTO fixed it. EX010408/13/15 reads confirmed.

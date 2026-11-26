@@ -1,0 +1,201 @@
+schema: openrms-rigs/profile/v1
+title: FT-DX10 SSB phone with the stock hand mic
+summary: 'Clean, natural SSB first: processor off, levels set with the ALC and COMP meters, TX bandwidth
+  at the default.'
+rig:
+  macro: RIG_MODEL_FTDX10
+  hamlib_model: 1042
+  mfg: Yaesu
+  name: FTDX-10
+operation: ssb
+connection: usb
+interface: stock SSM-75E hand mic
+hamlib: '>=4.6'
+audio:
+  tx_note: Set MIC GAIN so voice peaks stay inside the ALC zone. With AMC or the processor on, keep the
+    COMP meter at or below 10 dB.
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  check_only: true
+  expect:
+    one_of:
+    - USB
+    - LSB
+  note: LSB below 10 MHz, USB above (band convention).
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: 'AUTO: the radio picks SLOW for SSB/AM and FAST for CW. Yaesu advises leaving the AGC delay menus
+    alone.'
+  sources:
+  - S1
+  - S11
+  confidence: high
+- id: mic-gain
+  kind: level
+  name: MICGAIN
+  value: 0.3
+  unit: fraction
+  display: '30'
+  safety: tx
+  note: 'Yaesu''s method: talk normally and set MIC GAIN so peaks stay within the ALC zone. LZ3AI starts
+    at 30; the right number depends on your voice and mic.'
+  sources:
+  - S1
+  - S11
+  confidence: low
+- id: proc-off
+  kind: func
+  name: COMP
+  value: false
+  safety: tx
+  note: The speech processor is for tough conditions, not normal QSOs (Yaesu). When you do use it, keep
+    the COMP meter at or below 10 dB.
+  sources:
+  - S1
+  - S11
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  value: false
+  note: Off by default. When needed, keep the level modest; it distorts when turned up high.
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  value: false
+  note: DNR off by default. Use a modest level; higher levels add artifacts.
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: ipo
+  kind: manual
+  name: IPO / preamp
+  manual:
+    menu: IPO (touch panel)
+    value: AMP1 normally; IPO (no preamp) on the low bands or with strong signals
+  note: Sherwood measured AMP1 at about +9 dB and AMP2 at about +18 dB. Try IPO before ATT.
+  sources:
+  - S1
+  - S10
+  - S11
+  confidence: high
+- id: amc-level
+  kind: manual
+  name: AMC LEVEL
+  safety: tx
+  manual:
+    menu: '[FUNC] > AMC LEVEL'
+    value: COMP meter at or below 10 dB on voice peaks (start around 55–60)
+  sources:
+  - S1
+  - S3
+  - S11
+  confidence: low
+- id: amc-release
+  kind: manual
+  name: AMC RELEASE TIME
+  safety: tx
+  manual:
+    menu: OPERATION SETTING > TX AUDIO > AMC RELEASE TIME
+    value: MID (default)
+  note: LZ3AI and AB2RA (FTDX101D) prefer FAST.
+  sources:
+  - S1
+  - S3
+  confidence: low
+- id: tx-bpf
+  kind: manual
+  name: TX BPF SEL (SSB)
+  safety: tx
+  manual:
+    menu: RADIO SETTING > MODE SSB > TX BPF SEL
+    value: 100-2900 (default); 200-2800 for a punchier sound
+  sources:
+  - S1
+  - S11
+  confidence: low
+- id: mic-eq
+  kind: manual
+  name: MIC EQ
+  safety: tx
+  manual:
+    menu: '[FUNC] > MIC EQ'
+    value: OFF with the hand mic
+  sources:
+  - S11
+  confidence: low
+- id: roofing
+  kind: manual
+  name: Roofing filter
+  manual:
+    menu: R.FIL (touch panel)
+    value: 3 kHz
+  sources:
+  - S1
+  - S11
+  confidence: medium
+- id: monitor
+  kind: manual
+  name: Monitor
+  manual:
+    menu: '[FUNC] > MONI LEVEL'
+    value: Headphones, or the lowest usable speaker level
+  note: Monitor audio feeding back into the mic can hold VOX on (Yaesu).
+  sources:
+  - S1
+  confidence: high
+notes: |-
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
+  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
+  Not yet confirmed on air by an openRMS user.
+
+  Desk mics: Yaesu publishes no EQ values. AB2RA's FTDX101D notes cut the lows around 300 Hz and add presence around 2.4–2.5 kHz [S12];
+  treat that only as a starting point. Yaesu's method: minimum power into a dummy load, listen on a second receiver, and adjust the
+  parametric EQ (OPERATION SETTING > TX AUDIO > PRMTRC EQ1–3) in several passes [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FTDX10 Operation Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/19.pdf
+  date: '2021'
+  note: Mirror copy of Yaesu's manual.
+- id: S3
+  title: List of FTDX10 Settings for FT8/FT4/MSK144 (and FTDX10 Issues and Solutions)
+  author: Steve Kavanagh VE3SMA
+  url: https://www.qsl.net/ve3sma/FTDX10%20FT8%20Settings%20Jan%202%202022v0.3.pdf
+  date: 2022-01
+- id: S10
+  title: 'Sherwood Engineering HF test results: FTdx10 (with CQWW 160 CW notes)'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/n9ewo/sher_ftdx10.pdf
+  date: 2020-12
+- id: S11
+  title: Basic one-time settings, SSB operation and CW operation on the Yaesu FTDX-10 (three articles)
+  author: LZ3AI
+  url: https://www.galanto.com/en/osnovni-ednokratni-nastroyki-na-yaesu-ftdx-10/
+  date: 2025-09
+  note: See also /en/operativna-rabota-na-ssb/ and /en/operativna-rabota-na-cw/ on the same site.
+- id: S12
+  title: FTDX101D Audio Setup Menu Settings (sibling radio, context only)
+  author: Janis AB2RA
+  url: https://www.wirelessgirl.net/Projects/FTDX101D_AudioSetup.html
+  date: 2025-08

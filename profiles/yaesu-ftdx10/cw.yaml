@@ -1,0 +1,217 @@
+schema: openrms-rigs/profile/v1
+title: FT-DX10 CW with paddles (semi break-in)
+summary: 'Yaesu''s keyer defaults plus contest-tested choices from Rob Sherwood NC0B: semi break-in, 500
+  Hz roofing, the gentlest keying shape.'
+rig:
+  macro: RIG_MODEL_FTDX10
+  hamlib_model: 1042
+  mfg: Yaesu
+  name: FTDX-10
+operation: cw
+connection: usb
+interface: paddle on the KEY jack
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 500
+  note: Receive width defaults to 500 Hz; narrow to 250–150 Hz under QRM.
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: agc
+  kind: level
+  name: AGC
+  value: 6
+  expect:
+    not:
+    - 0
+  display: AUTO
+  note: 'AUTO: the radio picks SLOW for SSB/AM and FAST for CW. Yaesu advises leaving the AGC delay menus
+    alone.'
+  sources:
+  - S1
+  - S11
+  confidence: high
+- id: bk-delay
+  kind: level
+  name: BKINDL
+  value: 250
+  unit: ms
+  display: 250 ms
+  safety: tx
+  note: Semi break-in hang time. Sherwood used 250 ms at 26 WPM; LZ3AI uses 200 ms.
+  sources:
+  - S10
+  - S11
+  confidence: medium
+- id: apf-off
+  kind: func
+  name: APF
+  value: false
+  note: Audio peak filter off by default; switch it on under QRM.
+  sources:
+  - S1
+  confidence: high
+- id: ipo
+  kind: manual
+  name: IPO / preamp
+  manual:
+    menu: IPO (touch panel)
+    value: AMP1 normally; IPO (no preamp) on the low bands or with strong signals
+  note: Sherwood measured AMP1 at about +9 dB and AMP2 at about +18 dB. Try IPO before ATT.
+  sources:
+  - S1
+  - S10
+  - S11
+  confidence: high
+- id: keyer
+  kind: manual
+  name: Keyer
+  manual:
+    menu: '[FUNC] > KEYER'
+    value: ON for paddles, OFF for a straight key
+  sources:
+  - S1
+  - S11
+  confidence: high
+- id: keyer-type
+  kind: manual
+  name: KEYER TYPE
+  manual:
+    menu: CW SETTING > KEYER > KEYER TYPE
+    value: ELEKEY-B (default)
+  sources:
+  - S1
+  confidence: medium
+- id: dot-dash
+  kind: manual
+  name: KEYER DOT/DASH
+  manual:
+    menu: CW SETTING > KEYER > KEYER DOT/DASH
+    value: NOR (default); REV for left-handed operators
+  sources:
+  - S1
+  confidence: high
+- id: weight
+  kind: manual
+  name: CW WEIGHT
+  safety: tx
+  manual:
+    menu: CW SETTING > KEYER > CW WEIGHT
+    value: 3.0 (default; range 2.5–4.5)
+  sources:
+  - S1
+  confidence: high
+- id: bk-type
+  kind: manual
+  name: CW BK-IN TYPE
+  manual:
+    menu: CW SETTING > MODE CW > CW BK-IN TYPE
+    value: SEMI
+  note: 'Full break-in relays are loud (Sherwood). Switching break-in on stays a manual action: profiles
+    never key the radio.'
+  sources:
+  - S1
+  - S10
+  - S11
+  confidence: high
+- id: qsk-delay
+  kind: manual
+  name: QSK DELAY TIME
+  safety: tx
+  manual:
+    menu: CW SETTING > MODE CW > QSK DELAY TIME
+    value: 15 ms (default)
+  sources:
+  - S1
+  confidence: high
+- id: wave-shape
+  kind: manual
+  name: CW WAVE SHAPE
+  safety: tx
+  manual:
+    menu: CW SETTING > MODE CW > CW WAVE SHAPE
+    value: the longest setting your firmware offers (6 or 8 ms)
+  note: Sherwood measured real rise times at about half the menu value, causing key clicks. The operation
+    manual lists 4/6/8 ms but the CAT manuals list 1/2/4/6 ms, so check your radio.
+  sources:
+  - S1
+  - S2
+  - S10
+  confidence: medium
+- id: roofing
+  kind: manual
+  name: Roofing filter
+  manual:
+    menu: R.FIL (touch panel)
+    value: 500 Hz
+  note: It doesn't widen when the DSP width is set wider than the roof (Sherwood).
+  sources:
+  - S1
+  - S10
+  - S11
+  confidence: medium
+- id: apf-width
+  kind: manual
+  name: APF WIDTH
+  manual:
+    menu: OPERATION SETTING > RX DSP > APF WIDTH
+    value: MEDIUM (default) or WIDE
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: auto-mode
+  kind: manual
+  name: CW AUTO MODE and PC KEYING
+  manual:
+    menu: CW SETTING > MODE CW > CW AUTO MODE / PC KEYING
+    value: 'OFF'
+  note: Both can key the radio even with break-in off. Leave them off unless you know you need them.
+  sources:
+  - S1
+  - S3
+  - S11
+  confidence: high
+notes: |-
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
+  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
+  Not yet confirmed on air by an openRMS user.
+
+  CW pitch (Hamlib allows 300–1050 Hz; 600–750 Hz is common, LZ3AI uses 750) and keyer speed are personal choices, so they aren't set here [S2] [S11].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: FTDX10 Operation Manual
+  author: Yaesu Musen
+  url: https://www.rcqsl.com/manuals/19.pdf
+  date: '2021'
+  note: Mirror copy of Yaesu's manual.
+- id: S2
+  title: FTDX10 CAT Operation Reference Manual (rev 2308-F)
+  author: Yaesu Musen
+  url: https://www.yaesu.com/Files/4CB893D7-1018-01AF-FA97E9E9AD48B50C/FTDX10_CAT_OM_ENG_2308-F.pdf
+  date: 2023-08
+  note: Menu chart gives the EX numbers and CAT ranges.
+- id: S3
+  title: List of FTDX10 Settings for FT8/FT4/MSK144 (and FTDX10 Issues and Solutions)
+  author: Steve Kavanagh VE3SMA
+  url: https://www.qsl.net/ve3sma/FTDX10%20FT8%20Settings%20Jan%202%202022v0.3.pdf
+  date: 2022-01
+- id: S10
+  title: 'Sherwood Engineering HF test results: FTdx10 (with CQWW 160 CW notes)'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/n9ewo/sher_ftdx10.pdf
+  date: 2020-12
+- id: S11
+  title: Basic one-time settings, SSB operation and CW operation on the Yaesu FTDX-10 (three articles)
+  author: LZ3AI
+  url: https://www.galanto.com/en/osnovni-ednokratni-nastroyki-na-yaesu-ftdx-10/
+  date: 2025-09
+  note: See also /en/operativna-rabota-na-ssb/ and /en/operativna-rabota-na-cw/ on the same site.

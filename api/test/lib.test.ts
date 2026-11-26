@@ -180,3 +180,15 @@ describe("injection and keying hardening", () => {
     expect(checkPlan(plan, { agc: 0 }).steps.find((s) => s.id === "agc")!.status).toBe("drift");
   });
 });
+
+describe("sources", () => {
+  it("accepts cited sources and rejects dangling references", () => {
+    const p = clone(ex("ic7300-ft8.yaml"));
+    p.sources = [{ id: "S1", title: "IC-7300 manual", author: "Icom", url: "https://www.icomamerica.com/" }];
+    p.steps[0]!.sources = ["S1"];
+    p.steps[0]!.confidence = "high";
+    expect(validateProfile(p).errors).toEqual([]);
+    p.steps[1]!.sources = ["S9"];
+    expect(validateProfile(p).errors.map((e) => e.message).join()).toMatch(/S9/);
+  });
+});

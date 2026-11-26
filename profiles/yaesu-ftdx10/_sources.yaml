@@ -1,0 +1,13 @@
+# Shared source list for the FT-DX10 profiles (each profile copies the ones it cites).
+- { id: S1, title: "FTDX10 Operation Manual", author: "Yaesu Musen", url: "https://www.rcqsl.com/manuals/19.pdf", date: "2021", note: "Mirror copy of Yaesu's manual." }
+- { id: S2, title: "FTDX10 CAT Operation Reference Manual (rev 2308-F)", author: "Yaesu Musen", url: "https://www.yaesu.com/Files/4CB893D7-1018-01AF-FA97E9E9AD48B50C/FTDX10_CAT_OM_ENG_2308-F.pdf", date: "2023-08", note: "Menu chart gives the EX numbers and CAT ranges." }
+- { id: S3, title: "List of FTDX10 Settings for FT8/FT4/MSK144 (and FTDX10 Issues and Solutions)", author: "Steve Kavanagh VE3SMA", url: "https://www.qsl.net/ve3sma/FTDX10%20FT8%20Settings%20Jan%202%202022v0.3.pdf", date: "2022-01" }
+- { id: S4, title: "WSJT-X Yaesu FTDX10 Setup Guide", author: "Andre VE3SP", url: "https://ftdx10.blogspot.com/2021/08/wsjt-x-mac-mini-big-sur-and-yaesu-ftdx10.html", date: "2021-08" }
+- { id: S5, title: "FTDX10, Apple Computers and the USB Audio Chain", author: "M0AWS", url: "https://m0aws.co.uk/?p=457", date: "2022-02" }
+- { id: S6, title: "WSJT-X User Guide 2.7.0", author: "Joe Taylor K1JT and the WSJT development group", url: "https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html" }
+- { id: S7, title: "Fldigi Users Manual 4.2 (RX/TX audio levels, RTTY)", author: "Dave Freese W1HKJ", url: "https://www.w1hkj.org/FldigiHelp/audio_adjust_page.html" }
+- { id: S8, title: "Pat wiki: Rig control", author: "Martin Hebnes Pedersen LA5NTA and Pat contributors", url: "https://github.com/la5nta/pat/wiki/Rig-control" }
+- { id: S9, title: "On-air test of an FT-DX10 with Pat and ardopcf (hamstack)", author: "openRMS / hamstack project", date: "2026-11-25", note: "AGC OFF clipped USB receive audio; AGC AUTO fixed it. EX010408/13/15 reads confirmed." }
+- { id: S10, title: "Sherwood Engineering HF test results: FTdx10 (with CQWW 160 CW notes)", author: "Rob Sherwood NC0B", url: "https://www.qsl.net/n9ewo/sher_ftdx10.pdf", date: "2020-12" }
+- { id: S11, title: "Basic one-time settings, SSB operation and CW operation on the Yaesu FTDX-10 (three articles)", author: "LZ3AI", url: "https://www.galanto.com/en/osnovni-ednokratni-nastroyki-na-yaesu-ftdx-10/", date: "2025-09", note: "See also /en/operativna-rabota-na-ssb/ and /en/operativna-rabota-na-cw/ on the same site." }
+- { id: S12, title: "FTDX101D Audio Setup Menu Settings (sibling radio, context only)", author: "Janis AB2RA", url: "https://www.wirelessgirl.net/Projects/FTDX101D_AudioSetup.html", date: "2025-08" }

@@ -1,0 +1,101 @@
+schema: openrms-rigs/profile/v1
+title: IC-7300MK2 SSB phone starting point
+summary: Mic gain, compressor and TX bandwidth set the way Icom's manual describes, with IC-7300 operating
+  values where they carry over.
+rig:
+  macro: RIG_MODEL_IC7300MK2
+  hamlib_model: 3094
+  mfg: Icom
+  name: IC-7300MK2
+operation: ssb
+connection: usb
+interface: stock HM-219 hand mic
+hamlib: '>=4.7'
+audio:
+  tx_note: With the compressor off, ALC peaks should stay within 30–50% of the ALC zone.
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  check_only: true
+  expect:
+    one_of:
+    - USB
+    - LSB
+  note: LSB below 10 MHz, USB above (band convention).
+  sources:
+  - S1
+  confidence: high
+- id: mic-gain
+  kind: level
+  name: MICGAIN
+  value: 0.5
+  unit: fraction
+  display: 50%
+  safety: tx
+  note: Start near 50%, then adjust with COMP off so ALC stays within 30–50% of its zone.
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: comp
+  kind: manual
+  name: Speech compressor level
+  safety: tx
+  manual:
+    menu: FUNCTION > [COMP] (hold 1 s)
+    value: COMP meter 10–20 dB on voice peaks
+  note: Optional. Too much compression adds splatter and background noise.
+  sources:
+  - S1
+  - S10
+  confidence: medium
+- id: tbw-select
+  kind: manual
+  name: TX bandwidth (TBW)
+  safety: tx
+  manual:
+    menu: FUNCTION > [TBW]
+    value: MID (300–2700 Hz) for everyday DX; WIDE for ragchew
+  sources:
+  - S1
+  confidence: medium
+- id: tbw-values
+  kind: manual
+  name: TBW presets
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB > TBW
+    value: WIDE 100–2900, MID 300–2700, NAR 500–2500 (defaults)
+  sources:
+  - S1
+  confidence: high
+notes: |-
+  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
+  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
+  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
+  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7300MK2 Basic Manual
+  author: Icom Inc.
+  url: https://www.icomamerica.com/support/manual/4508/
+  date: '2026'
+- id: S6
+  title: IC-7300mk2 (forum thread)
+  author: 'wfview forum: phil, W6EL, K6US and others'
+  url: https://forum.wfview.org/t/ic-7300mk2/4597
+  date: 2025-12 to 2026-02
+- id: S7
+  title: Rig control error from WSJT-X with new IC-7300MK2
+  author: 'Hamlib-developer list: KG8OM, N3GB'
+  url: https://sourceforge.net/p/hamlib/mailman/message/59306165
+  date: 2026-03
+- id: S10
+  title: IC-7300 SSB Voice Setup Reference Card (IC-7300 source)
+  author: McMinnville ARC / Yamhill County ARES
+  url: https://qsl.net/w7owo/YCARES%20Winlink%20Training%20Documents/OptimizingPhoneReferenceCard.pdf
+  date: 2025-06

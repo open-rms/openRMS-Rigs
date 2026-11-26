@@ -1,0 +1,194 @@
+schema: openrms-rigs/profile/v1
+title: IC-7300MK2 FT8 over the LAN port (RS-BA1 or wfview)
+summary: Remote or across-the-house operation through the MK2's built-in LAN port, with no server PC at
+  the radio.
+rig:
+  macro: RIG_MODEL_IC7300MK2
+  hamlib_model: 3094
+  mfg: Icom
+  name: IC-7300MK2
+operation: ft8
+connection: lan
+interface: built-in LAN (10/100)
+hamlib: '>=4.7'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  sources:
+  - S1
+  confidence: high
+- id: comp-off
+  kind: func
+  name: COMP
+  value: false
+  safety: tx
+  sources:
+  - S8
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  value: false
+  sources:
+  - S1
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  value: false
+  sources:
+  - S1
+  confidence: medium
+- id: dhcp
+  kind: manual
+  name: DHCP
+  manual:
+    menu: MENU » SET > Network > DHCP
+    value: ON (default), or a static address
+  note: Factory static settings are 192.168.0.10 /24. Remote control and NTP need a default gateway.
+  sources:
+  - S1
+  confidence: high
+- id: net-control
+  kind: manual
+  name: Network Control
+  manual:
+    menu: MENU » SET > Network > Remote Settings > Network Control
+    value: 'ON'
+  note: OFF by default. Nothing connects until this is on.
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: ports
+  kind: manual
+  name: Control / Serial / Audio ports
+  manual:
+    menu: MENU » SET > Network > Remote Settings
+    value: UDP 50001 / 50002 / 50003 (defaults)
+  sources:
+  - S1
+  - S5
+  confidence: high
+- id: net-user
+  kind: manual
+  name: Network User1 ID and password
+  manual:
+    menu: MENU » SET > Network > Remote Settings > Network User1
+    value: your choice (password 8–16 characters)
+  note: Use a strong password; don't expose these ports to the internet without a VPN.
+  sources:
+  - S1
+  confidence: high
+- id: lan-mod
+  kind: manual
+  name: LAN MOD Level
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > LAN MOD Level
+    value: 50% (default)
+  sources:
+  - S1
+  confidence: medium
+- id: data-mod
+  kind: manual
+  name: DATA MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA MOD
+    value: LAN
+  sources:
+  - S5
+  - S6
+  confidence: medium
+- id: data-off-mod
+  kind: manual
+  name: DATA OFF MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA OFF MOD
+    value: LAN
+  note: Otherwise voice modes over the network transmit no audio.
+  sources:
+  - S5
+  - S6
+  confidence: medium
+- id: civ-address
+  kind: manual
+  name: CI-V Address
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Address
+    value: B6h
+  note: The IC-7300 used 94h. Software set for an IC-7300 won't find the MK2.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S6
+  confidence: high
+software:
+- app: rs-ba1
+  setting: version
+  value: 2.x, updated for the MK2
+  note: Older RS-BA1 builds don't recognise the MK2 [S9].
+- app: wfview
+  setting: version
+  value: 2.20 or newer
+  note: MK2 support arrived in 2.20 and was still incomplete in early 2026 [S6].
+- app: wsjt-x
+  setting: Radio and audio
+  value: the virtual serial port and audio devices your remote app provides
+notes: |-
+  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
+  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
+  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
+  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+
+  The Hamlib steps here need a rigctld path to the radio, for example wfview's built-in rigctld server. That path is not confirmed with the MK2.
+tags:
+- researched
+- unverified
+- remote
+sources:
+- id: S1
+  title: IC-7300MK2 Basic Manual
+  author: Icom Inc.
+  url: https://www.icomamerica.com/support/manual/4508/
+  date: '2026'
+- id: S2
+  title: IC-7300MK2 CI-V Reference Guide
+  author: Icom Inc.
+  url: https://www.icomamerica.com/support/manual/4512/
+  date: 2025-10
+- id: S4
+  title: Icom 7300MK2 Quick Start
+  author: RemoteTx
+  url: https://www.remotetx.net/icom-7300mk2-quick-start/
+  date: '2026'
+- id: S5
+  title: Icom IC-7300 & Family (IC-7300 / Mk II)
+  author: POTACAT Users Guide
+  url: https://docs.potacat.com/nested/rig-ic-7300.html
+- id: S6
+  title: IC-7300mk2 (forum thread)
+  author: 'wfview forum: phil, W6EL, K6US and others'
+  url: https://forum.wfview.org/t/ic-7300mk2/4597
+  date: 2025-12 to 2026-02
+- id: S7
+  title: Rig control error from WSJT-X with new IC-7300MK2
+  author: 'Hamlib-developer list: KG8OM, N3GB'
+  url: https://sourceforge.net/p/hamlib/mailman/message/59306165
+  date: 2026-03
+- id: S8
+  title: Icom IC-7300 Digital setup for WSJT-X (IC-7300 source)
+  author: Andrew VK3FS
+  url: https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/
+  date: 2021-12
+- id: S9
+  title: ICOM IC-7300 MK II
+  author: Tom McQuiggan M7MCQ
+  url: https://tommcquiggan.blogspot.com/2025/12/icom-ic-7300-mk-ii.html
+  date: 2025-12

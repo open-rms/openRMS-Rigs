@@ -63,6 +63,8 @@ export const apiKey = pgTable("api_key", {
   hash: text("hash").notNull(),
   kind: text("kind").notNull(),
   ownerSub: text("owner_sub").notNull(),
+  /** Owner's callsign when the key was made, so key-submitted profiles are credited. */
+  ownerCallsign: text("owner_callsign"),
   name: text("name").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),

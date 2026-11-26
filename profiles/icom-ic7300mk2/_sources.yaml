@@ -1,0 +1,11 @@
+# Shared source list for the IC-7300MK2 profiles (copied into each profile).
+- { id: S1, title: "IC-7300MK2 Basic Manual", author: "Icom Inc.", url: "https://www.icomamerica.com/support/manual/4508/", date: "2026" }
+- { id: S2, title: "IC-7300MK2 CI-V Reference Guide", author: "Icom Inc.", url: "https://www.icomamerica.com/support/manual/4512/", date: "2025-10" }
+- { id: S3, title: "IC-7300MK2 product page", author: "Icom America", url: "https://icomamerica.com/lineup/products/IC-7300MK2/" }
+- { id: S4, title: "Icom 7300MK2 Quick Start", author: "RemoteTx", url: "https://www.remotetx.net/icom-7300mk2-quick-start/", date: "2026" }
+- { id: S5, title: "Icom IC-7300 & Family (IC-7300 / Mk II)", author: "POTACAT Users Guide", url: "https://docs.potacat.com/nested/rig-ic-7300.html" }
+- { id: S6, title: "IC-7300mk2 (forum thread)", author: "wfview forum: phil, W6EL, K6US and others", url: "https://forum.wfview.org/t/ic-7300mk2/4597", date: "2025-12 to 2026-02" }
+- { id: S7, title: "Rig control error from WSJT-X with new IC-7300MK2", author: "Hamlib-developer list: KG8OM, N3GB", url: "https://sourceforge.net/p/hamlib/mailman/message/59306165", date: "2026-03" }
+- { id: S8, title: "Icom IC-7300 Digital setup for WSJT-X (IC-7300 source)", author: "Andrew VK3FS", url: "https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/", date: "2021-12" }
+- { id: S9, title: "ICOM IC-7300 MK II", author: "Tom McQuiggan M7MCQ", url: "https://tommcquiggan.blogspot.com/2025/12/icom-ic-7300-mk-ii.html", date: "2025-12" }
+- { id: S10, title: "IC-7300 SSB Voice Setup Reference Card (IC-7300 source)", author: "McMinnville ARC / Yamhill County ARES", url: "https://qsl.net/w7owo/YCARES%20Winlink%20Training%20Documents/OptimizingPhoneReferenceCard.pdf", date: "2025-06" }

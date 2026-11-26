@@ -17,12 +17,14 @@ export type Step = {
   expect?: { min?: number; max?: number; one_of?: Scalar[]; not?: Scalar[] }; check_only?: boolean; safety?: "rx" | "tx";
   unit?: string; display?: string; cat?: { protocol: "ascii" | "civ"; read?: string; reply?: string; set?: string; values?: Record<string, string> };
   manual?: { menu: string; value: string; image?: string }; note?: string;
+  sources?: string[]; confidence?: "high" | "medium" | "low";
 };
+export type Source = { id: string; title: string; author?: string; url?: string; date?: string; note?: string };
 export type ProfileDoc = {
   schema: string; title: string; summary?: string; rig: { macro: string; hamlib_model: number; mfg: string; name: string; firmware?: string };
   operation: string; connection: string; interface?: string; hamlib: string;
   audio?: { rx_target_dbfs?: number; rx_note?: string; tx_note?: string }; steps: Step[];
-  software?: { app: string; setting: string; value: string; note?: string }[]; notes?: string; tags?: string[];
+  software?: { app: string; setting: string; value: string; note?: string }[]; sources?: Source[]; notes?: string; tags?: string[];
 };
 export type Envelope = {
   id: string; revision: number; current_revision: number; published_revision: number | null; status: string; title: string;

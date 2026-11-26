@@ -386,4 +386,25 @@
       <div class="grid gap-1.5 md:col-span-2"><Label for="f-notes">Notes (Markdown)</Label><Textarea id="f-notes" rows={4} bind:value={doc.notes} /></div>
     </Card.Content>
   </Card.Root>
+
+  <!-- Sources -->
+  <Card.Root>
+    <Card.Header><Card.Title>Sources</Card.Title><Card.Description>Credit where the settings came from (manuals, articles, your own on-air testing). Record values as facts with a link; don't paste text from the source. Steps can cite these by id in YAML (<code>sources: [S1]</code>).</Card.Description></Card.Header>
+    <Card.Content class="space-y-2">
+      {#each doc.sources ?? [] as so, i (so.id)}
+        <div class="grid gap-2 md:grid-cols-[52px_1.4fr_1fr_1.4fr_auto]">
+          <span class="text-muted-foreground self-center font-mono text-xs">[{so.id}]</span>
+          <Input placeholder="Title" bind:value={so.title} />
+          <Input placeholder="Author" bind:value={so.author} />
+          <Input placeholder="https://…" bind:value={so.url} />
+          <Button type="button" variant="ghost" size="sm" onclick={() => (doc.sources = doc.sources!.filter((_, j) => j !== i))}>Remove</Button>
+        </div>
+      {/each}
+      <Button type="button" variant="outline" size="sm" onclick={() => {
+        const used = new Set((doc.sources ?? []).map((s) => s.id));
+        let n = 1; while (used.has(`S${n}`)) n++;
+        doc.sources = [...(doc.sources ?? []), { id: `S${n}`, title: "" }];
+      }}>+ Add a source</Button>
+    </Card.Content>
+  </Card.Root>
 </div>

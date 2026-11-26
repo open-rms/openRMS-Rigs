@@ -18,7 +18,10 @@ export type Step = {
   cat?: Cat;
   manual?: { menu: string; value: string; image?: string };
   note?: string;
+  sources?: string[];
+  confidence?: "high" | "medium" | "low";
 };
+export type Source = { id: string; title: string; author?: string; url?: string; date?: string; note?: string };
 export type Profile = {
   schema: "openrms-rigs/profile/v1";
   title: string;
@@ -31,6 +34,7 @@ export type Profile = {
   audio?: { rx_target_dbfs?: number; rx_note?: string; tx_note?: string };
   steps: Step[];
   software?: { app: string; setting: string; value: string; note?: string }[];
+  sources?: Source[];
   notes?: string;
   tags?: string[];
 };

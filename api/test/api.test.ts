@@ -118,7 +118,7 @@ describe("api", () => {
     const k = await json(app.request("/api/v1/me/keys", { method: "POST", body: "{}", headers: auth(user, { "content-type": "application/json" }) }));
     expect(k.key).toMatch(/^ormsr_/);
     const me = await json(app.request("/api/v1/me", { headers: { "x-api-key": k.key } }));
-    expect(me).toMatchObject({ sub: "u-1", via: "key" });
+    expect(me).toMatchObject({ sub: "u-1", via: "key", callsign: "K1ABC" });
     expect((await app.request(`/api/v1/profiles/${id}/star`, { method: "PUT", headers: { "x-api-key": k.key } })).status).toBe(403);
     expect((await app.request("/api/v1/me/keys", { headers: { "x-api-key": k.key } })).status).toBe(403);
     expect((await app.request(`/api/v1/me/keys/${k.id}`, { method: "DELETE", headers: auth(user) })).status).toBe(204);

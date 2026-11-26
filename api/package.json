@@ -13,7 +13,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
-    "dev-token": "tsx scripts/dev-token.ts"
+    "dev-token": "tsx scripts/dev-token.ts",
+    "import-profiles": "tsx scripts/import-profiles.ts"
   },
   "license": "AGPL-3.0-or-later",
   "devEngines": {

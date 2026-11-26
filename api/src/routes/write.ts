@@ -180,7 +180,8 @@ writeRoutes.post("/me/keys", requireAuth({ tokenOnly: true }), async (c) => {
   const name = (b.name ?? "").trim().slice(0, 60) || "rig agent";
   const k = mintKey();
   const id = `key_${k.hash.slice(0, 12)}`;
-  await db.insert(apiKey).values({ id, prefix: k.prefix, hash: k.hash, kind: "agent", ownerSub: c.get("principal").sub, name });
+  const who = c.get("principal");
+  await db.insert(apiKey).values({ id, prefix: k.prefix, hash: k.hash, kind: "agent", ownerSub: who.sub, ownerCallsign: who.callsign ?? null, name });
   return c.json({ id, key: k.key, prefix: k.prefix, kind: "agent", name, note: "Shown once. Store it in a 0600 file." }, 201);
 });
 

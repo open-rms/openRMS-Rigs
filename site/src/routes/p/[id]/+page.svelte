@@ -71,6 +71,11 @@
   }
 </script>
 
+{#snippet refs(ids: string[] | undefined, confidence: string | undefined)}
+  {#if ids?.length}<span class="ml-1 text-xs">{#each ids as id}<a href={`#src-${id}`} class="font-mono no-underline">[{id}]</a>{/each}</span>{/if}
+  {#if confidence}<span class={["ml-1 rounded px-1 text-[10px] uppercase", confidence === "high" ? "bg-primary-soft text-primary" : confidence === "low" ? "bg-muted text-muted-foreground" : "bg-secondary"]} title="How well the sources support this value">{confidence}</span>{/if}
+{/snippet}
+
 {#if error}<p class="text-destructive">{error}</p>{/if}
 {#if p && doc}
   <div class="mb-6">
@@ -115,8 +120,8 @@
                     {#each auto as s}
                       {@const src = doc.steps.find((d) => d.id === s.id)}
                       <Table.Row>
-                        <Table.Cell><div class="font-medium">{s.name}</div>{#if src?.note}<div class="text-muted-foreground max-w-md text-xs">{src.note}</div>{/if}</Table.Cell>
-                        <Table.Cell>{s.check_only ? "check" : src?.display ?? show(src?.value)}{#if src?.passband_hz}, {src.passband_hz} Hz{/if}</Table.Cell>
+                        <Table.Cell><div class="font-medium">{s.name}{@render refs(src?.sources, src?.confidence)}</div>{#if src?.note}<div class="text-muted-foreground max-w-md text-xs">{src.note}</div>{/if}</Table.Cell>
+                        <Table.Cell>{s.check_only ? "check" : src?.display ?? (src?.cat?.values?.[String(src?.value)] ? `${src.cat.values[String(src.value)]} (${src.value})` : show(src?.value))}{#if src?.passband_hz}, {src.passband_hz} Hz{/if}</Table.Cell>
                         <Table.Cell class="space-x-1 whitespace-nowrap">
                           {#if s.safety === "tx"}<Badge variant="destructive">TX</Badge>{/if}
                           {#if s.kind === "cat"}<Badge variant="outline">raw CAT</Badge>{/if}
@@ -137,7 +142,7 @@
                 {#each manual as s}
                   <label class="flex items-start gap-3">
                     <Checkbox checked={!!done[s.id]} onCheckedChange={(v) => (done[s.id] = v)} />
-                    <span><span class="font-mono text-sm">{s.manual?.menu}</span> → <b>{s.manual?.value}</b>{#if s.safety === "tx"} <Badge variant="destructive">TX</Badge>{/if}
+                    <span><span class="font-mono text-sm">{s.manual?.menu}</span> → <b>{s.manual?.value}</b>{#if s.safety === "tx"} <Badge variant="destructive">TX</Badge>{/if}{@render refs(s.sources, s.confidence)}
                       {#if s.note}<span class="text-muted-foreground block text-xs">{s.note}</span>{/if}</span>
                   </label>
                 {/each}
@@ -151,6 +156,20 @@
                 <Table.Root><Table.Body>
                   {#each doc.software as s}<Table.Row><Table.Cell class="text-muted-foreground">{s.app}</Table.Cell><Table.Cell>{s.setting}</Table.Cell><Table.Cell class="font-medium">{s.value}</Table.Cell></Table.Row>{/each}
                 </Table.Body></Table.Root>
+              </Card.Content>
+            </Card.Root>
+          {/if}
+          {#if doc.sources?.length}
+            <Card.Root id="sources">
+              <Card.Header><Card.Title>Sources</Card.Title><Card.Description>Where these settings come from. Settings are facts; the credit goes to these authors.</Card.Description></Card.Header>
+              <Card.Content>
+                <ol class="space-y-1.5 text-sm">
+                  {#each doc.sources as so}
+                    <li id={`src-${so.id}`}><span class="text-muted-foreground font-mono text-xs">[{so.id}]</span>
+                      {#if so.url}<a href={so.url} rel="noopener noreferrer nofollow" target="_blank">{so.title}</a>{:else}{so.title}{/if}{#if so.author}{" "}by <b>{so.author}</b>{/if}{#if so.date}{" "}({so.date}){/if}
+                      {#if so.note}<span class="text-muted-foreground block text-xs">{so.note}</span>{/if}</li>
+                  {/each}
+                </ol>
               </Card.Content>
             </Card.Root>
           {/if}
