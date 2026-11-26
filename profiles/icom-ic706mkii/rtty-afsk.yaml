@@ -1,0 +1,261 @@
+schema: openrms-rigs/profile/v1
+title: "IC-706MKII RTTY (AFSK) through an ACC-port sound interface"
+summary: "Audio-frequency RTTY from MMTTY or fldigi into the ACC socket, on LSB (or the radio's RTTY mode as Icom describes)."
+rig:
+  macro: RIG_MODEL_IC706MKII
+  hamlib_model: 3010
+  mfg: Icom
+  name: IC-706MkII
+operation: rtty
+connection: serial
+interface: external sound interface on the 13-pin ACC socket (e.g. SignaLink USB, Digirig) plus a CI-V cable
+hamlib: '>=4.6'
+audio:
+  rx_note: 'ACC pin 12 gives a fixed 100–350 mV receive level whatever the AF knob says, so set the receive level on the interface or the computer input.'
+  tx_note: "AA5AU: raise the audio until ALC just moves, then back off to just zero; too low is better than too high. Set it with the interface TX knob or computer level."
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: LSB
+  passband_hz: 0
+  menu:
+  - MODE
+  note: 'AFSK on LSB is the AA5AU method, and KV5R runs computer AFSK in SSB and suggests removing RTTY from the mode rotation unless you use FSK. Icom''s manual instead describes AFSK through the ACC socket in RTTY mode (RTTY TONE and SHIFT then apply), which also lets you select the narrow CW/RTTY filters. Pick one and set the software to match.'
+  sources:
+  - S1
+  - S6
+  - S8
+  confidence: medium
+- id: rtty-tone
+  kind: manual
+  name: RTTY tone and shift (RTTY mode only)
+  manual:
+    menu: Quick set (hold DISPLAY 2 s) > Q2 RTTY TONE / Q3 RTTY SHIFT
+    value: 2125 Hz / 170 Hz (defaults)
+  note: Only used if you operate in RTTY mode; match the software's mark tone and shift. In LSB they don't apply.
+  sources:
+  - S1
+  confidence: high
+- id: rtty-keying
+  kind: manual
+  name: RTTY keying polarity (RTTY mode only)
+  manual:
+    menu: Quick set > Q4 RTTY KEYING
+    value: n (normal, default)
+  note: Holding [MODE] 1 s in RTTY selects RTTY reverse if received text is garbled.
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: manual
+  name: AGC time constant
+  manual:
+    menu: MENU > M4 > [F-3] AGC
+    value: FAST ('FAGC' shown)
+  note: Icom suggests fast AGC for receiving data. The MKII has only FAST and SLOW, no AGC OFF; RF gain (below) can reduce AGC action further.
+  sources:
+  - S1
+  confidence: medium
+- id: rf-sql
+  kind: manual
+  name: RF/SQL control
+  manual:
+    menu: Front panel [RF/SQL] knob
+    value: Squelch fully open (anticlockwise)
+  note: With the default initial set item 21 RF GAIN = OFF, this knob is only a squelch. To use it as RF gain in USB, set item 21 to ON; Icom's normal RF gain position is 10 o'clock.
+  sources:
+  - S1
+  confidence: medium
+- id: nb-off
+  kind: manual
+  name: Noise blanker
+  manual:
+    menu: MENU > M3 > [F-2] NB
+    value: 'OFF'
+  note: The blanker is for pulse-type noise; leave it off unless you have that.
+  sources:
+  - S1
+  confidence: low
+- id: filter
+  kind: manual
+  name: IF filter
+  manual:
+    menu: MENU > M3 > [F-1] FIL
+    value: Narrow if a CW/RTTY filter is fitted (RTTY mode); normal 2.4 kHz in LSB
+  note: "The FL-100 (500 Hz) and FL-232 (350 Hz) are listed for CW and RTTY; in LSB only the SSB filters are selectable. KV5R's trick on the MKIIG: fit the FL-232 and declare it as an FL-223 so it becomes a narrow SSB filter (untested on a MKII). AA5AU notes AFSK on LSB works best with narrow SSB filtering."
+  sources:
+  - S1
+  - S6
+  - S8
+  confidence: medium
+- id: comp-off
+  kind: manual
+  name: Speech compressor
+  safety: tx
+  manual:
+    menu: MENU > M4 > [F-2] COM
+    value: 'OFF'
+  note: Compression on a data signal adds distortion; AA5AU turns the processor off for AFSK.
+  sources:
+  - S8
+  confidence: medium
+- id: vox-off
+  kind: manual
+  name: Radio VOX
+  safety: tx
+  manual:
+    menu: MENU > M4 > [F-1] VOX
+    value: 'OFF'
+  note: PTT comes from the interface on ACC pin 3 (HSEND); the radio's own VOX would key on any audio. A SignaLink's VOX is the interface's, not this one.
+  sources:
+  - S1
+  - S7
+  confidence: medium
+- id: rf-power
+  kind: manual
+  name: RF power
+  safety: tx
+  manual:
+    menu: Quick set (hold DISPLAY 2 s) > Q1 RF POWER
+    value: H, with output set by audio drive (no ALC); check with a watt meter
+  note: 'Range L, 1–9, H (5–100 W on HF/50 MHz, 2–20 W on 144 MHz). Sources disagree on how much: KV5R leaves Q1 at 100% and lowers the computer audio to get about 20–30 W with no ALC (MKIIG); AA5AU aims for near-full output with no ALC. No source gives a 706 duty-cycle rating. RTTY transmits continuously while you send.'
+  sources:
+  - S1
+  - S6
+  - S8
+  confidence: low
+- id: opt-filters
+  kind: manual
+  name: Optional filter presets
+  manual:
+    menu: Initial set mode (hold LOCK at power-on) > 19 OPT. FIL 1 / 20 OPT. FIL 2
+    value: The filter fitted in each slot, or no (default)
+  note: An installed filter can't be selected until it is declared here.
+  sources:
+  - S1
+  confidence: high
+- id: civ-address
+  kind: manual
+  name: CI-V address
+  manual:
+    menu: Initial set mode > 25 CI-V ADDRES
+    value: 4EH (default)
+  sources:
+  - S1
+  confidence: high
+- id: civ-baud
+  kind: manual
+  name: CI-V baud rate
+  manual:
+    menu: Initial set mode > 26 CI-V BAUD
+    value: 19200 (default Auto); set the software to the same rate
+  note: Hamlib's IC-706MkII driver runs 300–19200 baud. KV5R fixes 19200 on the MKIIG; Auto follows the controller.
+  sources:
+  - S1
+  - S2
+  - S6
+  confidence: medium
+- id: civ-transceive
+  kind: manual
+  name: CI-V transceive
+  manual:
+    menu: Initial set mode > 27 CI-V TRN
+    value: ON (default)
+  note: KV5R uses ON; a Digirig forum poster ran OFF on a MKIIG while chasing a PTT fault.
+  sources:
+  - S1
+  - S6
+  - S10
+  confidence: medium
+- id: civ-731
+  kind: manual
+  name: CI-V 731 mode
+  manual:
+    menu: Initial set mode > 28 CI-V 731
+    value: OFF (default, 5-byte frequency data)
+  note: ON only for transceive with an IC-735.
+  sources:
+  - S1
+  - S6
+  confidence: high
+software:
+- app: mmtty
+  setting: Mark / shift
+  value: 2125 Hz mark, 170 Hz shift, AFSK
+  note: AA5AU's MMTTY tutorial; the radio's RTTY TONE default is also 2125 Hz [S1] [S8].
+- app: mmtty
+  setting: PTT
+  value: RTS or DTR on the interface's serial port, or the SignaLink's VOX
+  note: Older Icoms, the MKII included, can't be keyed by radio command [S2] [S8].
+notes: |-
+  Researched from Icom's IC-706MKII manual and Hamlib's driver, with interface notes from Tigertronics and Digirig and practice from KV5R, AA5AU and others listed under Sources. Sources disagree on the mode (LSB or RTTY), see the mode step. Not yet confirmed on air by an openRMS user: check the step confidence.
+
+  RTTY is a 100% duty-cycle mode while sending; see the RF power step. FSK (ACC pin 10 or the RTTY jack, with the radio in RTTY mode) is outside this profile.
+
+  Hookup: the MKII has no USB port and no DATA socket. Audio and PTT go through the 13-pin ACC socket (pin 2 GND, pin 3 HSEND for HF/50 MHz PTT, pin 7 VSEND for 144 MHz, pin 11 MOD in, pin 12 AF out) and CAT through the 3.5 mm CI-V REMOTE jack [S1] [S7]. Tigertronics' SLCAB13I cable suits the SignaLink; for 2 m on a 706 or MKII, Tigertronics says to move its PTT jumper to its pin 4 position [S4]. Digirig's IC-706 cord set needs a Digirig Mobile rev 1.6 or later configured for CI-V [S5].
+
+  NA4IT found voice audio poor while the interface cable stayed in the ACC socket (on a MKIIG), so expect to unplug or switch it for phone [S12].
+
+  MKIIG owners differ: the MKIIG adds 70 cm, a 6-pin data socket, a VSEND select menu, more initial set items (so different numbers) and CI-V address 58h, and Hamlib can set its NB, COMP, preamp and attenuator. Don't copy MKIIG menu numbers to a MKII [S2] [S4] [S6] [S10] [S13]. On the MKII, DSP (notch and noise reduction) is the optional UT-106 unit [S3].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-706MKII Instruction Manual (A-5436H-1EX)
+  author: Icom Inc.
+  url: https://www.manualslib.com/manual/542581/Icom-Ic-706mkii.html
+  date: '1997'
+  note: 'Read on ManualsLib: ACC socket p.6, receive/transmit pp.21-26, CW p.32, RTTY p.34, set mode pp.43-48, menu guide p.60.'
+- id: S2
+  title: 'Hamlib 4.7.2 capabilities: IC-706MkII (model 3010) and IC-706MkIIG (model 3011)'
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/blob/Hamlib-4.7/rigs/icom/ic706.c
+  note: 'rigctl --dump-caps: PTT type None, serial 300..19200 baud, no settable functions or levels on the MKII; the MKIIG adds NB, COMP, PREAMP, ATT.'
+- id: S3
+  title: 'Equipment Review: Icom IC-706MkII (Amateur Radio magazine)'
+  author: Ron Fisher VK3OM
+  url: https://radiomanual.info/schemi/ICOM_HF/IC-706Mk2_review_1998.pdf
+  date: 1998-10
+- id: S4
+  title: 'SignaLink jumper settings: base and mobile radios (Icom IC-706 family)'
+  author: Tigertronics
+  url: https://tigertronics.com/sl_wirebm.htm
+- id: S5
+  title: Icom IC-706 Digirig cable set (13-pin ACC audio/PTT and CI-V cords)
+  author: Digirig
+  url: https://digirig.net/product/icom-ic-706-cords-for-digirig-mobile/
+- id: S6
+  title: '706: New Setup'
+  author: Harold Melton KV5R
+  url: https://kv5r.com/ham-radio/icom-706mkiig/706-new-setup/
+  date: 2015-04
+  note: Written for the IC-706MkIIG (sibling model); used only for practice that carries over to the MKII.
+- id: S7
+  title: '706: Computer Control and Soundcard Interface'
+  author: Harold Melton KV5R
+  url: https://kv5r.com/ham-radio/icom-706mkiig/706-computer-control-and-soundcard-interface
+  date: 2005-06
+  note: Written for the IC-706MkIIG (sibling model); the ACC pins it uses match the MKII manual.
+- id: S8
+  title: 'Getting Started on RTTY: Transmitting RTTY and AFSK with MMTTY (pages 5 and 6)'
+  author: AA5AU (aa5au.com)
+  url: https://www.aa5au.com/rtty/page-06/
+- id: S10
+  title: Configuring IC706MkII (Digirig forum thread)
+  author: G4CXT, kk7bws, K0TX (Digirig)
+  url: https://forum.digirig.net/t/configuring-ic706mkii/514
+  date: 2022-11 to 2023-04
+  note: One poster has a MKII, the other a MKIIG; the menu numbers quoted there are MKIIG ones.
+- id: S12
+  title: IC-706MKIIG digital interface switch box
+  author: NA4IT
+  url: https://qsl.net/na4it/interfaceswitch/interfaceswitch.html
+  note: IC-706MkIIG (sibling model).
+- id: S13
+  title: IC-706MKII No Audio (Digirig forum thread)
+  author: KW7IBE, K3euibarry, K0TX (Digirig)
+  url: https://forum.digirig.net/t/ic-706mkii-no-audio/3362
+  date: 2024-03
+  note: Replies discuss the 6-pin data socket and menus 29/30 of later 706 models; no fix confirmed.

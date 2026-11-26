@@ -1,0 +1,131 @@
+schema: openrms-rigs/profile/v1
+title: "IC-706MKII CW with the internal keyer"
+summary: "Keyer, pitch, break-in and narrow filter settings from Icom's IC-706MKII manual."
+rig:
+  macro: RIG_MODEL_IC706MKII
+  hamlib_model: 3010
+  mfg: Icom
+  name: IC-706MkII
+operation: cw
+connection: serial
+interface: paddle or key on the rear KEY jack; CAT (optional, for the mode step) over a CI-V cable
+hamlib: '>=4.6'
+audio:
+  tx_note: "Set output with Q1 RF POWER (L, 1–9, H)."
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 0
+  menu:
+  - MODE
+  note: Hold [MODE] to toggle CW reverse (CW-R) when interference sits on the other side.
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: paddle
+  kind: manual
+  name: Keyer / paddle type
+  manual:
+    menu: Quick set (in CW) > Q4 CW PADDLE
+    value: n (normal, default); r reverse, oFF for a straight key, ud for mic up/down
+  sources:
+  - S1
+  confidence: high
+- id: key-speed
+  kind: manual
+  name: Keyer speed
+  manual:
+    menu: Quick set > Q5 KEY SPEED
+    value: 20 wpm default (6–60), to taste
+  sources:
+  - S1
+  confidence: high
+- id: ratio
+  kind: manual
+  name: Keying weight
+  manual:
+    menu: Quick set > Q6 RATIO
+    value: 3.0 (default; 2.8–4.5)
+  sources:
+  - S1
+  confidence: high
+- id: pitch
+  kind: manual
+  name: CW pitch
+  manual:
+    menu: Quick set > Q2 CW PITCH
+    value: 600 Hz default (300–900 Hz), to taste
+  sources:
+  - S1
+  confidence: high
+- id: break-in
+  kind: manual
+  name: Break-in and delay
+  safety: tx
+  manual:
+    menu: MENU > M4 > [F-2] BRK; delay at Quick set > Q3 BK-IN DELAY
+    value: Semi break-in, delay 1.0 s default (0–2 s)
+  note: Personal choice; the manual's quick-set delay applies to semi break-in.
+  sources:
+  - S1
+  confidence: medium
+- id: filter
+  kind: manual
+  name: IF filter
+  manual:
+    menu: MENU > M3 > [F-1] FIL
+    value: Narrow if a CW filter is fitted (FL-100 500 Hz, FL-232 350 Hz, FL-101 250 Hz)
+  note: Declare the filter first in initial set items 19/20. VK3OM notes the MKII takes two optional filters (the original 706 took one).
+  sources:
+  - S1
+  - S3
+  confidence: high
+- id: opt-filters
+  kind: manual
+  name: Optional filter presets
+  manual:
+    menu: Initial set mode (hold LOCK at power-on) > 19 OPT. FIL 1 / 20 OPT. FIL 2
+    value: The filter fitted in each slot, or no (default)
+  note: An installed filter can't be selected until it is declared here.
+  sources:
+  - S1
+  confidence: high
+- id: rf-power
+  kind: manual
+  name: RF power
+  safety: tx
+  manual:
+    menu: Quick set > Q1 RF POWER
+    value: H (100 W) or as needed
+  sources:
+  - S1
+  confidence: high
+notes: |-
+  From Icom's IC-706MKII manual and VK3OM's review. Speed, pitch and weight are personal choices; the values are Icom's defaults. Not yet confirmed on air by an openRMS user.
+
+  A paddle can also be wired to the front-panel MIC connector through two resistors (3.9 kΩ and 2.2 kΩ, 5% or better), as the manual shows [S1].
+
+  MKIIG owners differ: Hamlib can switch break-in (SBKIN/FBKIN) and NB on the MKIIG, not on the MKII [S2].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-706MKII Instruction Manual (A-5436H-1EX)
+  author: Icom Inc.
+  url: https://www.manualslib.com/manual/542581/Icom-Ic-706mkii.html
+  date: '1997'
+  note: 'Read on ManualsLib: ACC socket p.6, receive/transmit pp.21-26, CW p.32, RTTY p.34, set mode pp.43-48, menu guide p.60.'
+- id: S2
+  title: 'Hamlib 4.7.2 capabilities: IC-706MkII (model 3010) and IC-706MkIIG (model 3011)'
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/blob/Hamlib-4.7/rigs/icom/ic706.c
+  note: 'rigctl --dump-caps: PTT type None, serial 300..19200 baud, no settable functions or levels on the MKII; the MKIIG adds NB, COMP, PREAMP, ATT.'
+- id: S3
+  title: 'Equipment Review: Icom IC-706MkII (Amateur Radio magazine)'
+  author: Ron Fisher VK3OM
+  url: https://radiomanual.info/schemi/ICOM_HF/IC-706Mk2_review_1998.pdf
+  date: 1998-10

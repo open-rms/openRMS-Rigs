@@ -19,6 +19,7 @@ Researched example profiles, one folder per radio:
 | `yaesu-ftdx10/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink ARDOP, Winlink VARA HF, SSB, AM, CW |
 | `icom-ic7300/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW |
 | `icom-ic7300mk2/` | FT8/FT4 over USB-C, FT8 over the LAN port, SSB, CW |
+| `icom-ic706mkii/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, SSB, AM, CW, all through an external ACC-port sound interface (Hamlib can only set mode on this radio) |
 
 They were compiled on 2026-11-25 by comparing the manufacturers' manuals with independent setup
 guides, lab reports and on-air tests, all listed in each file's `sources`. For every setting:

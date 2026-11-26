@@ -1,0 +1,152 @@
+schema: openrms-rigs/profile/v1
+title: "IC-706MKII SSB phone with the stock HM-103 mic"
+summary: "Icom's mic gain and compressor procedure, slow AGC, and the standard 2.4 kHz filter."
+rig:
+  macro: RIG_MODEL_IC706MKII
+  hamlib_model: 3010
+  mfg: Icom
+  name: IC-706MkII
+operation: ssb
+connection: serial
+interface: stock HM-103 hand mic; CAT (optional, for the mode step) over a CI-V cable
+hamlib: '>=4.6'
+audio:
+  tx_note: "Select the ALC meter (M3 > MET). Mic gain so ALC peaks mid-zone without passing it; with COMP on, COMP GAIN so ALC stays in the zone loud or soft."
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  expect:
+    one_of:
+    - USB
+    - LSB
+  check_only: true
+  menu:
+  - MODE
+  note: LSB below 10 MHz, USB above (band convention).
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: manual
+  name: AGC time constant
+  manual:
+    menu: MENU > M4 > [F-3] AGC
+    value: SLOW (no 'FAGC' shown)
+  note: Icom recommends slow AGC for normal phone operation.
+  sources:
+  - S1
+  confidence: high
+- id: mic-gain
+  kind: manual
+  name: Mic gain
+  safety: tx
+  manual:
+    menu: Quick set (hold DISPLAY 2 s) > Q2 MIC GAIN
+    value: 'Start at 5 (default), keep within 2–5; ALC mid-zone on voice peaks'
+  note: Icom's compressor procedure keeps mic gain at 2–5 with ALC around the middle of its zone; KV5R uses 4–5 (MKIIG). The setting is shared by all bands and phone modes.
+  sources:
+  - S1
+  - S6
+  confidence: high
+- id: comp
+  kind: manual
+  name: Speech compressor
+  safety: tx
+  manual:
+    menu: MENU > M4 > [F-2] COM, level on the side-panel [COMP GAIN] trimmer
+    value: OFF as a baseline; when on, set COMP GAIN so ALC stays within its zone
+  note: Icom describes it for SSB. KV5R rarely uses it and keeps the trimmer at or below 10 o'clock after checking on another receiver (MKIIG).
+  sources:
+  - S1
+  - S6
+  confidence: medium
+- id: vox-off
+  kind: manual
+  name: VOX
+  safety: tx
+  manual:
+    menu: MENU > M4 > [F-1] VOX
+    value: OFF (use the mic PTT)
+  note: If you use VOX, set side-panel VOX GAIN and ANTI VOX and Q3 VOX DELAY (default 1.0 s) as the manual describes.
+  sources:
+  - S1
+  confidence: medium
+- id: filter
+  kind: manual
+  name: IF filter
+  manual:
+    menu: MENU > M3 > [F-1] FIL
+    value: Normal (FL-272, 2.4 kHz); wide FL-103 2.8 kHz or narrow FL-223 1.9 kHz if fitted
+  sources:
+  - S1
+  - S3
+  confidence: high
+- id: nb
+  kind: manual
+  name: Noise blanker
+  manual:
+    menu: MENU > M3 > [F-2] NB
+    value: OFF unless there is pulse noise (ignition etc.)
+  sources:
+  - S1
+  confidence: medium
+- id: rf-power
+  kind: manual
+  name: RF power
+  safety: tx
+  manual:
+    menu: Quick set > Q1 RF POWER
+    value: H (default, 100 W HF/50 MHz) or as needed
+  sources:
+  - S1
+  confidence: high
+- id: carrier
+  kind: manual
+  name: Carrier (BFO) offset
+  safety: tx
+  manual:
+    menu: Quick set (in SSB) > Q4 CARRIER Freq
+    value: 0 Hz (default; -200 to +200 Hz)
+  note: Shifts the transmit and receive audio response. VK3OM measured the MKII's transmit response with the carrier at -40 Hz.
+  sources:
+  - S1
+  - S3
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-706MKII manual, VK3OM's 1998 review and KV5R's MKIIG notes. Not yet confirmed on air by an openRMS user: check the step confidence.
+
+  VK3OM reports poor transmit audio on early IC-706 units, fixed in later production and in the MKII [S3]. If an ACC digital interface stays plugged in, voice audio may suffer (NA4IT, on a MKIIG) [S12].
+
+  MKIIG owners differ: the MKIIG adds 70 cm, more menu items (different numbers) and Hamlib control of NB, COMP, preamp and attenuator [S2] [S6]. On the MKII, DSP is the optional UT-106 unit [S3].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-706MKII Instruction Manual (A-5436H-1EX)
+  author: Icom Inc.
+  url: https://www.manualslib.com/manual/542581/Icom-Ic-706mkii.html
+  date: '1997'
+  note: 'Read on ManualsLib: ACC socket p.6, receive/transmit pp.21-26, CW p.32, RTTY p.34, set mode pp.43-48, menu guide p.60.'
+- id: S2
+  title: 'Hamlib 4.7.2 capabilities: IC-706MkII (model 3010) and IC-706MkIIG (model 3011)'
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/blob/Hamlib-4.7/rigs/icom/ic706.c
+  note: 'rigctl --dump-caps: PTT type None, serial 300..19200 baud, no settable functions or levels on the MKII; the MKIIG adds NB, COMP, PREAMP, ATT.'
+- id: S3
+  title: 'Equipment Review: Icom IC-706MkII (Amateur Radio magazine)'
+  author: Ron Fisher VK3OM
+  url: https://radiomanual.info/schemi/ICOM_HF/IC-706Mk2_review_1998.pdf
+  date: 1998-10
+- id: S6
+  title: '706: New Setup'
+  author: Harold Melton KV5R
+  url: https://kv5r.com/ham-radio/icom-706mkiig/706-new-setup/
+  date: 2015-04
+  note: Written for the IC-706MkIIG (sibling model); used only for practice that carries over to the MKII.
+- id: S12
+  title: IC-706MKIIG digital interface switch box
+  author: NA4IT
+  url: https://qsl.net/na4it/interfaceswitch/interfaceswitch.html
+  note: IC-706MkIIG (sibling model).
