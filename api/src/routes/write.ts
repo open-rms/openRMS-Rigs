@@ -5,6 +5,7 @@ import { db, schema } from "../db/index.js";
 import { isModerator, requireAuth, type AuthEnv, type Principal } from "../auth.js";
 import { accountsConfigured, accountsFetch, keysUrl } from "../lib/accounts.js";
 import { fail } from "../lib/http.js";
+import { findRig } from "../lib/catalog.js";
 import { canSee, envelope, getProfile, initialStatus, isPublic, listProfiles, newId, publicWhere } from "../lib/profiles.js";
 import { parseProfileText, validateProfile } from "../lib/validate.js";
 import type { Context } from "hono";
@@ -25,7 +26,7 @@ async function parseBody(c: Context) {
 
 writeRoutes.get("/me", requireAuth(), (c) => {
   const p = c.get("principal");
-  return c.json({ sub: p.sub, callsign: p.callsign ?? null, callsign_verified: p.callsignVerified, role: p.role, via: p.via, moderator: isModerator(p) });
+  return c.json({ sub: p.sub, callsign: p.callsign ?? null, callsign_verified: p.callsignVerified, role: p.role, via: p.via, moderator: isModerator(p), radios: p.radios ?? [] });
 });
 
 writeRoutes.get("/me/profiles", requireAuth({ scope: "profiles:read-private" }), async (c) => {
@@ -166,6 +167,40 @@ writeRoutes.get("/profiles/:id/reports", async (c) => {
     .orderBy(desc(report.createdAt)).limit(200);
   c.header("Cache-Control", "public, max-age=60");
   return c.json({ reports: rows });
+});
+
+/**
+ * The signed-in user's radios: macros from the token's `radios` claim, labels and hamlib_model
+ * from Accounts (GET /users/{sub}/radios), names and public profile counts from Rigs.
+ * Falls back to the claim alone when Accounts can't be reached.
+ */
+writeRoutes.get("/me/radios", requireAuth({ tokenOnly: true }), async (c) => {
+  const who = c.get("principal");
+  type Radio = { model: string; hamlib_model?: number; label?: string | null; primary?: boolean };
+  let radios: Radio[] = (who.radios ?? []).map((m, i) => ({ model: m, primary: i === 0 }));
+  let source = "token";
+  if (accountsConfigured()) {
+    try {
+      const r = await accountsFetch(`/api/v1/users/${encodeURIComponent(who.sub)}/radios`, {}, "accounts.read");
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const body = (await r.json()) as Radio[] | { radios?: Radio[] };
+      radios = (Array.isArray(body) ? body : body.radios ?? []).slice(0, 20);
+      source = "accounts";
+    } catch (e) {
+      console.error("[rigs] radios from Accounts failed; using the token claim", e);
+    }
+  }
+  const counts = new Map(
+    (await db.select({ macro: profile.rigMacro, n: sql<number>`count(*)::int` }).from(profile).where(publicWhere()).groupBy(profile.rigMacro)).map((r) => [r.macro, r.n]),
+  );
+  c.header("Cache-Control", "private, no-store");
+  return c.json({
+    source,
+    radios: radios.map((r) => {
+      const rig = findRig(r.model);
+      return { model: r.model, hamlib_model: r.hamlib_model ?? rig?.model ?? null, label: r.label ?? null, primary: !!r.primary, mfg: rig?.mfg ?? null, name: rig?.name ?? null, profiles: counts.get(r.model) ?? 0 };
+    }),
+  });
 });
 
 // ---- API keys: minted and managed at Accounts (identity.md §5); Rigs only lists them ----

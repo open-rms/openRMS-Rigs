@@ -33,7 +33,9 @@ if (process.argv[2] === "--key") {
   process.exit(0);
 }
 const [sub = "dev-user-1", callsign = "N0CALL", role = "user"] = process.argv.slice(2);
-const token = await new SignJWT({ callsign, callsign_verified: role !== "user", callsign_verified_method: "moderator", clubs: [], role })
+// RADIOS="RIG_MODEL_FTDX10,RIG_MODEL_IC7300" adds the `radios` claim (identity.md §4).
+const radios = process.env.RADIOS ? { radios: process.env.RADIOS.split(",").filter(Boolean) } : {};
+const token = await new SignJWT({ callsign, callsign_verified: role !== "user", callsign_verified_method: "moderator", clubs: [], role, ...radios })
   .setProtectedHeader({ alg: "ES256", kid: jwk.kid })
   .setIssuer(process.env.OPENRMS_ISSUER ?? "http://localhost:8789")
   .setAudience(process.env.OPENRMS_AUDIENCE ?? process.env.PUBLIC_URL ?? "http://localhost:8790")

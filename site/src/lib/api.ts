@@ -1,7 +1,9 @@
 import { accessToken } from "./auth.ts";
 
 export type Scalar = number | boolean | string;
-export type RigSummary = { macro: string; hamlib_model: number; mfg: string; name: string; status: string; pseudo: boolean; profiles: number };
+export type RigSummary = { macro: string; hamlib_model: number; mfg: string; name: string; status: string; pseudo: boolean; profiles: number; yours?: boolean };
+/** One of the user's radios ("My radios" at openRMS Accounts). */
+export type MyRadio = { model: string; hamlib_model: number | null; label: string | null; primary: boolean; mfg: string | null; name: string | null; profiles: number };
 export type Control = { range: { min: number; max: number; step: number } | null; choices?: string[]; unit?: string };
 export type Rig = RigSummary & {
   backend_version: string; caps_available: boolean; hamlib: string;
@@ -73,7 +75,9 @@ const qs = (o: Record<string, string | number | undefined>) => {
 
 export const api = {
   operations: () => call<{ operations: string[] }>("/operations", { auth: false }),
-  rigs: (q?: string) => call<{ hamlib: string; count: number; rigs: RigSummary[] }>(`/rigs${qs({ q })}`, { auth: false }),
+  /** Signed in: the user's radios rank first (and carry `yours`). */
+  rigs: (q?: string) => call<{ hamlib: string; count: number; rigs: RigSummary[] }>(`/rigs${qs({ q })}`),
+  myRadios: () => call<{ source: string; radios: MyRadio[] }>("/me/radios"),
   rig: (macro: string) => call<Rig>(`/rigs/${encodeURIComponent(macro)}`, { auth: false }),
   /** For editors: revalidate (ETag) instead of trusting the HTTP cache, and fill in hints an older API lacks. */
   rigForEditor: async (macro: string) => {

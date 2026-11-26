@@ -24,6 +24,11 @@
     if (q.trim().length < 2) { rigHits = []; return; }
     t = setTimeout(() => api.rigs(q).then((r) => (rigHits = r.rigs.slice(0, 10))), 200);
   });
+  // The user's radios as one-click picks (from "My radios" at Accounts).
+  let myRadios = $state<RigSummary[]>([]);
+  api.myRadios()
+    .then((r) => (myRadios = r.radios.filter((x) => x.name && x.mfg && x.hamlib_model).map((x) => ({ macro: x.model, hamlib_model: x.hamlib_model!, mfg: x.mfg!, name: x.name!, status: "", pseudo: false, profiles: x.profiles, yours: true }))))
+    .catch(() => (myRadios = []));
   function pickRig(r: RigSummary) {
     const keep = doc.rig.firmware;
     doc.rig = { macro: r.macro, hamlib_model: r.hamlib_model, mfg: r.mfg, name: r.name, ...(keep ? { firmware: keep } : {}) };
@@ -203,9 +208,17 @@
         {/if}
         {#if !lockRig}
           <Input placeholder={doc.rig.macro ? "Change radio…" : "Search: IC-7300, FTDX-10, K3…"} bind:value={rigQ} />
+          {#if !rigQ && myRadios.some((r) => r.macro !== doc.rig.macro)}
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <span class="text-muted-foreground">Your radios:</span>
+              {#each myRadios.filter((r) => r.macro !== doc.rig.macro) as r (r.macro)}
+                <Button type="button" variant="outline" size="sm" onclick={() => pickRig(r)}>{r.name}</Button>
+              {/each}
+            </div>
+          {/if}
           {#if rigHits.length}
             <ul class="bg-card divide-y rounded-md border text-sm">
-              {#each rigHits as r}<li><button type="button" class="hover:bg-muted w-full px-3 py-2 text-left" onclick={() => pickRig(r)}>{r.mfg} {r.name} <span class="text-muted-foreground text-xs">({r.status})</span></button></li>{/each}
+              {#each rigHits as r}<li><button type="button" class="hover:bg-muted w-full px-3 py-2 text-left" onclick={() => pickRig(r)}>{r.mfg} {r.name} <span class="text-muted-foreground text-xs">({r.status}){r.yours ? " · yours" : ""}</span></button></li>{/each}
             </ul>
           {/if}
         {:else}

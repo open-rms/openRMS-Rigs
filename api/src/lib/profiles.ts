@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "../db/index.js";
 import { env } from "../env.js";
@@ -89,6 +89,9 @@ export async function listProfiles(o: ListQuery) {
     o.sort === "stars" ? [desc(profile.starCount), desc(profile.workedCount)]
     : o.sort === "recent" ? [desc(profile.updatedAt)]
     : [desc(sql`${profile.workedCount} - ${profile.notWorkedCount}`), desc(profile.starCount), desc(profile.updatedAt)];
+  // The signed-in user's radios first (when not already filtered to one radio).
+  const radios = !o.rig && !o.mine ? o.who?.radios : undefined;
+  if (radios?.length) order.unshift(asc(sql`CASE WHEN ${inArray(profile.rigMacro, radios)} THEN 0 ELSE 1 END`));
   const rows = await db.select().from(profile).where(and(...where)).orderBy(...order).limit(o.limit).offset(o.offset);
   const [{ n }] = (await db.select({ n: sql<number>`count(*)::int` }).from(profile).where(and(...where))) as [{ n: number }];
   return { rows, total: n };

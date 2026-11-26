@@ -56,6 +56,38 @@ describe("api", () => {
     expect(await names("icom ft-dx10")).not.toContain("RIG_MODEL_FTDX10");
   });
 
+  it("rig search ranks exact, then prefix, then substring matches", async () => {
+    const names = async (q: string) => (await json(app.request(`/api/v1/rigs?q=${encodeURIComponent(q)}`))).rigs.map((r: any) => r.macro);
+    expect((await names("ftdx10"))[0]).toBe("RIG_MODEL_FTDX10");
+    expect((await names("ic7300"))[0]).toBe("RIG_MODEL_IC7300");
+    expect((await names("ft-991"))[0]).toBe("RIG_MODEL_FT991");
+  });
+
+  it("your radios first: /rigs and /profiles, cached privately; /me/radios falls back to the claim", async () => {
+    const withRadios = execFileSync("node_modules/.bin/tsx", ["scripts/dev-token.ts", "u-9", "K9RAD", "user"], {
+      encoding: "utf8", env: { ...process.env, RADIOS: "RIG_MODEL_FTDX10,RIG_MODEL_IC7300,not-a-macro" },
+    }).trim().split("\n").pop()!;
+    const r = await app.request("/api/v1/rigs?q=ft", { headers: auth(withRadios) });
+    expect(r.headers.get("cache-control")).toMatch(/^private/);
+    expect(r.headers.get("vary")).toMatch(/Authorization/);
+    const list = (await r.json()).rigs;
+    expect(list.find((x: any) => x.macro === "RIG_MODEL_FTDX10").yours).toBe(true);
+    const anon = await app.request("/api/v1/rigs?q=ft");
+    expect(anon.headers.get("cache-control")).toMatch(/^public/);
+    expect((await anon.json()).rigs.some((x: any) => x.yours)).toBe(false);
+    // Without a query the user's radios lead, in their order.
+    const all = (await json(app.request("/api/v1/rigs", { headers: auth(withRadios) }))).rigs.map((x: any) => x.macro);
+    expect(all.slice(0, 2)).toEqual(["RIG_MODEL_FTDX10", "RIG_MODEL_IC7300"]);
+    // Profiles: IC-7300 (the test profiles' radio) sorts before others for this user.
+    const pr = await app.request("/api/v1/profiles", { headers: auth(withRadios) });
+    expect(pr.headers.get("cache-control")).toMatch(/^private/);
+    const me = await json(app.request("/api/v1/me", { headers: auth(withRadios) }));
+    expect(me.radios).toEqual(["RIG_MODEL_FTDX10", "RIG_MODEL_IC7300"]);
+    const mine = await json(app.request("/api/v1/me/radios", { headers: auth(withRadios) }));
+    expect(mine.source).toBe("token");
+    expect(mine.radios[0]).toMatchObject({ model: "RIG_MODEL_FTDX10", primary: true, mfg: "Yaesu", name: "FTDX-10" });
+  });
+
   it("requires auth to create", async () => {
     expect((await app.request("/api/v1/profiles", { method: "POST", body: yaml })).status).toBe(401);
   });

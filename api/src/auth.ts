@@ -17,6 +17,8 @@ export type Claims = {
   callsign_verified_method?: string;
   clubs?: { id: string; callsign: string; role: string; verified: boolean }[];
   role?: "user" | "moderator" | "admin" | "superadmin";
+  /** Scope `radios` (identity.md §4): Hamlib macros of the user's radios, primary first, at most 20. */
+  radios?: string[];
 };
 type KeyClaims = { sub: string; aud: string; scope: string[]; jti: string; exp: number; callsign?: string };
 type Verified = { kind: "access"; claims: Claims } | { kind: "key"; claims: KeyClaims };
@@ -69,6 +71,15 @@ export type Principal = {
   /** Key scopes (via "key" only). */
   scopes?: string[];
   jti?: string;
+  /** The user's radios (Hamlib macros, primary first) from a first-party token; keys carry none. */
+  radios?: string[];
+};
+
+const MACRO = /^RIG_MODEL_[A-Z0-9_]{1,40}$/;
+const radiosOf = (v: unknown): string[] | undefined => {
+  if (!Array.isArray(v)) return undefined;
+  const r = [...new Set(v.filter((m): m is string => typeof m === "string" && MACRO.test(m)))].slice(0, 20);
+  return r.length ? r : undefined;
 };
 
 /** Rigs' own ormsr_ keys were retired when Accounts started minting keys (identity.md §5.6). */
@@ -90,7 +101,7 @@ async function principalFrom(c: Context): Promise<Outcome> {
       return { principal: { sub: r.claims.sub, callsign: r.claims.callsign, callsignVerified: false, role: "user", via: "key", scopes: r.claims.scope, jti: r.claims.jti } };
     }
     const cl = r.claims;
-    return { principal: { sub: cl.sub, callsign: cl.callsign, callsignVerified: !!cl.callsign_verified, role: cl.role ?? "user", via: "token" } };
+    return { principal: { sub: cl.sub, callsign: cl.callsign, callsignVerified: !!cl.callsign_verified, role: cl.role ?? "user", via: "token", radios: radiosOf(cl.radios) } };
   } catch (e) {
     if (e instanceof TokenError && e.code === "revoked") return { error: "this API key has been revoked" };
     return null;

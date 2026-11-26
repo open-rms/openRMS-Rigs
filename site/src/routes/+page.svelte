@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { api, opLabel, type Envelope, type RigSummary } from "#lib/api.ts";
+  import { api, opLabel, type Envelope, type MyRadio, type RigSummary } from "#lib/api.ts";
+  import { accountUrl, me } from "#lib/auth.ts";
   import ProfileCard from "#lib/parts/ProfileCard.svelte";
   import { Input } from "#lib/components/ui/input/index.ts";
   import { Label } from "#lib/components/ui/label/index.ts";
@@ -15,6 +16,9 @@
   let error = $state("");
 
   api.operations().then((o) => (ops = o.operations));
+  // "Your radios" (set at openRMS Accounts): a strip of shortcuts when signed in.
+  let myRadios = $state<MyRadio[]>([]);
+  $effect(() => { if ($me) api.myRadios().then((r) => (myRadios = r.radios)).catch(() => (myRadios = [])); else myRadios = []; });
   $effect(() => {
     api.profiles({ operation, sort, limit: 60 }).then((r) => { profiles = r.profiles; total = r.total; }).catch((e) => (error = e.message));
   });
@@ -34,6 +38,22 @@
   </p>
 </section>
 
+{#if myRadios.length}
+  <section class="mb-6">
+    <h2 class="text-muted-foreground mb-2 text-sm font-medium">Your radios</h2>
+    <div class="flex flex-wrap gap-2">
+      {#each myRadios as r (r.model)}
+        <a class="bg-card hover:bg-muted rounded-md border px-3 py-2 text-sm no-underline" href={`/rigs/${r.model}`}>
+          <span class="font-medium">{r.label ?? `${r.mfg ?? ""} ${r.name ?? r.model}`.trim()}</span>
+          {#if r.label && r.name}<span class="text-muted-foreground"> · {r.name}</span>{/if}
+          <span class="text-muted-foreground"> · {r.profiles} profile{r.profiles === 1 ? "" : "s"}</span>
+        </a>
+      {/each}
+      <a class="text-muted-foreground self-center text-xs" href={accountUrl()} rel="noopener">Edit your radios</a>
+    </div>
+  </section>
+{/if}
+
 <div class="grid gap-6 md:grid-cols-[280px_1fr]">
   <aside class="space-y-5">
     <div class="grid gap-1.5">
@@ -42,7 +62,7 @@
       {#if rigs.length}
         <ul class="bg-card divide-y rounded-md border text-sm">
           {#each rigs as r}
-            <li><a class="flex justify-between px-3 py-2 no-underline" href={`/rigs/${r.macro}`}><span>{r.mfg} {r.name}</span><span class="text-muted-foreground">{r.profiles}</span></a></li>
+            <li><a class="flex justify-between px-3 py-2 no-underline" href={`/rigs/${r.macro}`}><span>{r.mfg} {r.name}{#if r.yours} <span class="text-primary text-xs">· yours</span>{/if}</span><span class="text-muted-foreground">{r.profiles}</span></a></li>
           {/each}
         </ul>
       {/if}

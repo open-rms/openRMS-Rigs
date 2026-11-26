@@ -5,7 +5,7 @@ import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { optionalAuth, type MaybeAuthEnv } from "../auth.js";
 import { catalogs, findRig, latest } from "../lib/catalog.js";
-import { cacheable, fail } from "../lib/http.js";
+import { cacheable, cacheableFor, fail } from "../lib/http.js";
 import { buildPlan, checkPlan } from "../lib/plan.js";
 import type { Profile, Scalar } from "../lib/profile.js";
 import { canSee, defaultRevision, envelope, getProfile, getRevision, isPrivileged, lineage, listProfiles, publicWhere } from "../lib/profiles.js";
@@ -47,10 +47,26 @@ publicRoutes.get("/rigs", async (c) => {
   const rigs = cat.rigs
     .filter((r) => pseudo || !r.pseudo)
     .filter((r) => !mfg || r.mfg.toLowerCase() === mfg.toLowerCase())
-    .filter((r) => { const hay = norm(`${r.mfg} ${r.name} ${r.macro}`); return words.every((w) => hay.includes(w)); })
-    .map((r) => ({ macro: r.macro, hamlib_model: r.model, mfg: r.mfg, name: r.name, status: r.status, pseudo: r.pseudo, profiles: counts.get(r.macro) ?? 0 }));
-  cacheable(c, 300);
-  return c.json({ hamlib: cat.hamlibVersion, count: rigs.length, rigs });
+    .filter((r) => { const hay = norm(`${r.mfg} ${r.name} ${r.macro}`); return words.every((w) => hay.includes(w)); });
+  // Ranking: with a query, exact normalized matches first, then prefix, then substring
+  // ("ftdx10" puts FTDX-10 before FTDX-101D); then the signed-in user's radios; then catalog order.
+  const whole = words.join("");
+  const rank = (r: (typeof rigs)[number]) => {
+    if (!whole) return 0;
+    const names = [norm(r.name), norm(r.macro.replace(/^RIG_MODEL_/, "")), norm(`${r.mfg} ${r.name}`)];
+    return names.includes(whole) ? 0 : names.some((n) => n.startsWith(whole)) ? 1 : 2;
+  };
+  const radios = c.get("principal")?.radios;
+  const mine = (m: string) => (radios ? (radios.includes(m) ? radios.indexOf(m) : radios.length) : 0);
+  const out = rigs
+    .map((r, i) => ({ r, i, rank: rank(r), mine: mine(r.macro) }))
+    .sort((a, b) => a.rank - b.rank || a.mine - b.mine || a.i - b.i)
+    .map(({ r }) => ({
+      macro: r.macro, hamlib_model: r.model, mfg: r.mfg, name: r.name, status: r.status, pseudo: r.pseudo, profiles: counts.get(r.macro) ?? 0,
+      ...(radios?.includes(r.macro) ? { yours: true } : {}),
+    }));
+  cacheableFor(c, radios, 300);
+  return c.json({ hamlib: cat.hamlibVersion, count: out.length, rigs: out });
 });
 
 publicRoutes.get("/rigs/:macro", (c) => {
@@ -90,7 +106,7 @@ publicRoutes.get("/profiles", async (c) => {
     rig: c.req.query("rig"), operation: op, q: c.req.query("q"), sort: c.req.query("sort"),
     limit, offset, who: c.get("principal"),
   });
-  cacheable(c, 60);
+  cacheableFor(c, !c.req.query("rig") ? c.get("principal")?.radios : undefined, 60);
   return c.json({ total, limit, offset, profiles: rows.map((r) => envelope(r)) });
 });
 
