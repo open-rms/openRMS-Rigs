@@ -25,7 +25,7 @@
 <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
     <h1 class="text-2xl font-semibold">Favorites</h1>
-    <p class="text-muted-foreground text-sm">Private: only you see these. Apps signed in as you (rigctlWeb, hamstack) can list them to find your settings fast.</p>
+    <p class="text-muted-foreground text-sm">Private: only you see these. Apps signed in as you (<a href="https://github.com/open-rms/rigctlweb" rel="noopener noreferrer" target="_blank">rigctlWeb</a>, hamstack) can list them to find your settings fast.</p>
   </div>
   {#if ops.length > 1}
     <NativeSelect class="w-48" bind:value={operation}>

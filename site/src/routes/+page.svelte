@@ -30,7 +30,7 @@
 <section class="mb-8">
   <h1 class="text-2xl font-semibold">Radio settings that worked for someone else</h1>
   <p class="text-muted-foreground mt-1 max-w-3xl">
-    Profiles for each radio and operation, checked against what Hamlib can set. Apps like rigctlWeb and hamstack can read your radio, show the differences and apply them. Nothing here ever keys your transmitter.
+    Profiles for each radio and operation, checked against what Hamlib can set. Apps like <a href="https://github.com/open-rms/rigctlweb" rel="noopener noreferrer" target="_blank">rigctlWeb</a> and hamstack can read your radio, show the differences and apply them. Nothing here ever keys your transmitter.
   </p>
 </section>
 

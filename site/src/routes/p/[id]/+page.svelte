@@ -314,6 +314,7 @@
           <Button variant="outline" href={p.links.json} download={`${p.id}.json`}>Download JSON</Button>
           <Button href={`/submit?fork=${p.id}&revision=${p.revision}`}>⑂ Clone and change</Button>
           <p class="text-muted-foreground text-xs">Start from these settings and change only what's different for your station. Your profile links back here.</p>
+          <p class="text-muted-foreground text-xs">Apply with <a href="https://github.com/open-rms/rigctlweb" rel="noopener noreferrer" target="_blank">rigctlWeb</a>: it reads your radio, shows what differs, applies the safe settings over CAT and can put them back.</p>
           <p class="text-muted-foreground text-xs">Apps: <code class="break-all">GET {p.links.apply_plan}</code></p>
         </Card.Content>
       </Card.Root>
