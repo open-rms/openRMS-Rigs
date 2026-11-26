@@ -102,6 +102,9 @@ export const api = {
   report: (id: string, body: { worked: boolean; firmware?: string; hamlib?: string; interface?: string; note?: string }) =>
     call<{ ok: boolean }>(`/profiles/${id}/reports`, { method: "POST", body: JSON.stringify(body), headers: { "content-type": "application/json" } }),
   reports: (id: string) => call<{ reports: { revision: number; callsign: string | null; worked: boolean; firmware: string | null; hamlib: string | null; interface: string | null; note: string | null; created_at: string }[] }>(`/profiles/${id}/reports`, { auth: false }),
+  keys: () => call<{ keys: { id: string; prefix: string; kind: string; name: string; created_at: string; last_used_at: string | null }[] }>("/me/keys"),
+  mintKey: (name: string) => call<{ id: string; key: string; prefix: string; name: string }>("/me/keys", { method: "POST", body: JSON.stringify({ name }), headers: { "content-type": "application/json" } }),
+  revokeKey: (id: string) => call<null>(`/me/keys/${id}`, { method: "DELETE" }),
   me: () => call<{ sub: string; callsign: string | null; callsign_verified: boolean; role: string; moderator: boolean }>("/me"),
   myProfiles: () => call<{ profiles: Envelope[] }>("/me/profiles"),
   queue: () => call<{ profiles: Envelope[] }>("/admin/profiles"),

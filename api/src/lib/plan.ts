@@ -42,6 +42,19 @@ export type Plan = {
 
 const num = (v: Scalar | undefined) => (typeof v === "boolean" ? (v ? 1 : 0) : v);
 
+/** "USB or LSB", "≥ 30, ≤ 70", "not 0": what a check accepts, in words. */
+export function expectText(e: Step["expect"]): string {
+  if (!e) return "";
+  const parts = [
+    e.one_of?.length ? e.one_of.join(" or ") : "",
+    e.min !== undefined ? `≥ ${e.min}` : "",
+    e.max !== undefined ? `≤ ${e.max}` : "",
+    e.not?.length ? `not ${e.not.join("/")}` : "",
+  ].filter(Boolean);
+  return parts.join(", ");
+}
+const checkText = (s: Step) => `check${expectText(s.expect) ? `: ${expectText(s.expect)}` : ""}`;
+
 /** Fills a cat.set template: {value} or {value:03} (zero-padded to width 3). */
 export function fillCat(template: string, value: Scalar): string {
   return template.replace(/\{value(?::(\d+))?\}/g, (_, w: string | undefined) => {
@@ -64,7 +77,7 @@ export function buildPlan(p: Profile, meta: { id?: string; revision?: number } =
         return {
           ...base, passband_hz: s.passband_hz ?? 0, readable: true,
           rigctld: { get: "m", set: set(`M ${s.value} ${s.passband_hz ?? 0}`) },
-          text: `Mode ${s.value}${s.passband_hz ? `, ${s.passband_hz} Hz passband` : ""}`,
+          text: check_only || s.value === undefined ? `Mode ${checkText(s)}` : `Mode ${s.value}${s.passband_hz ? `, ${s.passband_hz} Hz passband` : ""}`,
         };
       case "level":
       case "parm": {
@@ -73,7 +86,7 @@ export function buildPlan(p: Profile, meta: { id?: string; revision?: number } =
         return {
           ...base, unit: s.unit ?? (s.kind === "level" ? unitOf(s.name) : undefined), readable,
           rigctld: { get: readable ? `${L.toLowerCase()} ${s.name}` : null, set: set(`${L} ${s.name} ${num(s.value)}`) },
-          text: `${s.name} ${check_only ? "check" : `→ ${s.display ?? s.value}`}`,
+          text: `${s.name} ${check_only ? checkText(s) : `→ ${s.display ?? s.value}`}`,
         };
       }
       case "func": {
@@ -81,7 +94,7 @@ export function buildPlan(p: Profile, meta: { id?: string; revision?: number } =
         return {
           ...base, readable,
           rigctld: { get: readable ? `u ${s.name}` : null, set: set(`U ${s.name} ${num(s.value)}`) },
-          text: `${s.name} ${check_only ? "check" : s.value ? "on" : "off"}`,
+          text: `${s.name} ${check_only ? checkText(s) : s.value ? "on" : "off"}`,
         };
       }
       case "cat": {
@@ -91,7 +104,7 @@ export function buildPlan(p: Profile, meta: { id?: string; revision?: number } =
         return {
           ...base, readable: !!c.read, cat: { ...c, set_command: setCmd },
           rigctld: { get: ascii && c.read ? `w ${c.read}` : null, set: ascii && setCmd ? `w ${setCmd}` : null },
-          text: `${s.name} ${check_only ? "check" : `→ ${c.values?.[String(s.value)] ?? s.value}`} (raw CAT)`,
+          text: `${s.name} ${check_only ? checkText(s) : `→ ${c.values?.[String(s.value)] ?? s.value}`} (raw CAT)`,
         };
       }
       case "manual":

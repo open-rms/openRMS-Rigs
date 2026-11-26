@@ -161,13 +161,9 @@ steps:
   - S1
   confidence: high
 notes: |-
-  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
-  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
-  Not yet confirmed on air by an openRMS user.
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence. Not yet confirmed on air by an openRMS user.
 
-  Desk mics: Yaesu publishes no EQ values. AB2RA's FTDX101D notes cut the lows around 300 Hz and add presence around 2.4–2.5 kHz [S12];
-  treat that only as a starting point. Yaesu's method: minimum power into a dummy load, listen on a second receiver, and adjust the
-  parametric EQ (OPERATION SETTING > TX AUDIO > PRMTRC EQ1–3) in several passes [S1].
+  Desk mics: Yaesu publishes no EQ values. AB2RA's FTDX101D notes cut the lows around 300 Hz and add presence around 2.4–2.5 kHz [S12]; treat that only as a starting point. Yaesu's method: minimum power into a dummy load, listen on a second receiver, and adjust the parametric EQ (OPERATION SETTING > TX AUDIO > PRMTRC EQ1–3) in several passes [S1].
 tags:
 - researched
 - unverified

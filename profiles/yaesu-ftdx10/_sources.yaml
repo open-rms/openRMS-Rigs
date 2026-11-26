@@ -7,7 +7,7 @@
 - { id: S6, title: "WSJT-X User Guide 2.7.0", author: "Joe Taylor K1JT and the WSJT development group", url: "https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html" }
 - { id: S7, title: "Fldigi Users Manual 4.2 (RX/TX audio levels, RTTY)", author: "Dave Freese W1HKJ", url: "https://www.w1hkj.org/FldigiHelp/audio_adjust_page.html" }
 - { id: S8, title: "Pat wiki: Rig control", author: "Martin Hebnes Pedersen LA5NTA and Pat contributors", url: "https://github.com/la5nta/pat/wiki/Rig-control" }
-- { id: S9, title: "On-air test of an FT-DX10 with Pat and ardopcf (hamstack)", author: "openRMS / hamstack project", date: "2026-11-25", note: "AGC OFF clipped USB receive audio; AGC AUTO fixed it. EX010408/13/15 reads confirmed." }
+- { id: S9, title: "On-air test of an FT-DX10 with Pat and ardopcf (hamstack)", author: "openRMS / hamstack project", date: "2026-11-25", note: "AGC OFF clipped USB receive audio; AGC AUTO fixed it. Read back on the radio: EX010408/13/14/15/16/17 (reply formats confirmed)." }
 - { id: S10, title: "Sherwood Engineering HF test results: FTdx10 (with CQWW 160 CW notes)", author: "Rob Sherwood NC0B", url: "https://www.qsl.net/n9ewo/sher_ftdx10.pdf", date: "2020-12" }
 - { id: S11, title: "Basic one-time settings, SSB operation and CW operation on the Yaesu FTDX-10 (three articles)", author: "LZ3AI", url: "https://www.galanto.com/en/osnovni-ednokratni-nastroyki-na-yaesu-ftdx-10/", date: "2025-09", note: "See also /en/operativna-rabota-na-ssb/ and /en/operativna-rabota-na-cw/ on the same site." }
 - { id: S12, title: "FTDX101D Audio Setup Menu Settings (sibling radio, context only)", author: "Janis AB2RA", url: "https://www.wirelessgirl.net/Projects/FTDX101D_AudioSetup.html", date: "2025-08" }

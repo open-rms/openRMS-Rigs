@@ -80,9 +80,7 @@ steps:
   - S11
   confidence: high
 notes: |-
-  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
-  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
-  Not yet confirmed on air by an openRMS user.
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence. Not yet confirmed on air by an openRMS user.
 
   The speech processor works on SSB only [S1].
 tags:

@@ -25,9 +25,8 @@ steps:
   name: COMP
   value: false
   safety: tx
-  sources:
-  - S8
-  confidence: medium
+  note: No speech processing on data. General practice; no MK2 source states it.
+  confidence: low
 - id: nb-off
   kind: func
   name: NB
@@ -142,10 +141,7 @@ software:
   setting: Radio and audio
   value: the virtual serial port and audio devices your remote app provides
 notes: |-
-  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
-  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
-  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
-  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user. The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7]. Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
 
   The Hamlib steps here need a rigctld path to the radio, for example wfview's built-in rigctld server. That path is not confirmed with the MK2.
 tags:
@@ -182,11 +178,6 @@ sources:
   author: 'Hamlib-developer list: KG8OM, N3GB'
   url: https://sourceforge.net/p/hamlib/mailman/message/59306165
   date: 2026-03
-- id: S8
-  title: Icom IC-7300 Digital setup for WSJT-X (IC-7300 source)
-  author: Andrew VK3FS
-  url: https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/
-  date: 2021-12
 - id: S9
   title: ICOM IC-7300 MK II
   author: Tom McQuiggan M7MCQ

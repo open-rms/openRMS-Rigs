@@ -42,10 +42,8 @@ steps:
   name: COMP
   value: false
   safety: tx
-  note: No speech processing on data.
-  sources:
-  - S8
-  confidence: medium
+  note: No speech processing on data. General practice; no MK2 source states it.
+  confidence: low
 - id: nb-off
   kind: func
   name: NB
@@ -64,16 +62,13 @@ steps:
   - S8
   confidence: medium
 - id: usb-af
-  kind: level
-  name: USB_AF
-  value: 0.3
-  unit: fraction
-  display: 30%
-  expect:
-    min: 0.1
-    max: 0.5
-  note: USB receive audio to the computer. Factory default 50%; 10–30% is common. Hamlib's MK2 support
-    is Beta.
+  kind: manual
+  name: USB AF Output Level
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF Output Level
+    value: 10–30% (factory 50%)
+  note: 'USB receive audio to the computer. Lower it if WSJT-X shows clipping. Kept as a menu step: Hamlib''s
+    IC-7300MK2 support is Beta and the MK2 moved some CI-V menu items.'
   sources:
   - S1
   - S4
@@ -201,7 +196,8 @@ software:
 - app: wsjt-x
   setting: Radio > Rig
   value: Icom IC-7300MK2 (needs Hamlib 4.7 or newer)
-  note: 'Not ''Icom IC-7300'': the CI-V commands differ [S7].'
+  note: 'Not ''Icom IC-7300'': the CI-V commands differ. A March 2026 report still had rig-control errors
+    with Hamlib 4.7.0 and no confirmed fix [S7].'
 - app: wsjt-x
   setting: Radio > PTT method
   value: CAT
@@ -216,13 +212,9 @@ software:
   setting: Audio > Input / Output
   value: USB Audio CODEC (the radio)
 notes: |-
-  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
-  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
-  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
-  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user. The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7]. Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
 
-  Not settled by any source: AGC for FT8 on the MK2 (one IC-7300 guide runs it OFF [S8]; our FT-DX10 testing found OFF clips USB audio) and the best
-  FT8 power. Firmware 1.03 was current when this was written [S3].
+  Not settled by any source: AGC for FT8 on the MK2 (one IC-7300 guide runs it OFF [S8]; our FT-DX10 testing found OFF clips USB audio) and the best FT8 power. Firmware 1.03 was current when this was written [S3].
 tags:
 - researched
 - unverified

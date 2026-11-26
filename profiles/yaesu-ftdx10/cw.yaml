@@ -37,13 +37,14 @@ steps:
   - S11
   confidence: high
 - id: bk-delay
-  kind: level
-  name: BKINDL
-  value: 250
-  unit: ms
-  display: 250 ms
+  kind: manual
+  name: Break-in delay
   safety: tx
-  note: Semi break-in hang time. Sherwood used 250 ms at 26 WPM; LZ3AI uses 200 ms.
+  manual:
+    menu: '[FUNC] > BK-DELAY'
+    value: 200–250 ms
+  note: Semi break-in hang time. Sherwood used 250 ms at 26 WPM; LZ3AI uses 200 ms. Kept as a menu step
+    until Hamlib's BKINDL units for this radio are confirmed.
   sources:
   - S10
   - S11
@@ -178,9 +179,7 @@ steps:
   - S11
   confidence: high
 notes: |-
-  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths
-  and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence.
-  Not yet confirmed on air by an openRMS user.
+  Researched from Yaesu's FT-DX10 manuals, Rob Sherwood NC0B's lab report, and LZ3AI's operating articles. Yaesu documents the menu paths and meter targets well, but few people publish FT-DX10 voice numbers, so most values rest on one operator: check the step confidence. Not yet confirmed on air by an openRMS user.
 
   CW pitch (Hamlib allows 300–1050 Hz; 600–750 Hz is common, LZ3AI uses 750) and keyer speed are personal choices, so they aren't set here [S2] [S11].
 tags:

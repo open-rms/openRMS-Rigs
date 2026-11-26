@@ -70,11 +70,10 @@ steps:
   sources:
   - S1
   confidence: high
-notes: |-
-  Researched from Icom's MK2 manuals and community reports, not yet confirmed on air by an openRMS user.
-  The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several IC-7300 menu
-  items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V commands moved [S6] [S7].
-  Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.
+notes: 'Researched from Icom''s MK2 manuals and community reports, not yet confirmed on air by an openRMS
+  user. The MK2 is not an IC-7300 with new paint: its CI-V address is B6h (the IC-7300 uses 94h), several
+  IC-7300 menu items such as CI-V USB Baud Rate and USB Serial Function no longer exist, and some CI-V
+  commands moved [S6] [S7]. Hamlib lists it as model 3094 (Beta); pick the IC-7300MK2 entry, never IC-7300.'
 tags:
 - researched
 - unverified

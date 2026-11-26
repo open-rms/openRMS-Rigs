@@ -130,14 +130,15 @@ steps:
       '0': DATA
       '1': USB
   note: RADIO SETTING > MODE PSK/DATA > REAR SELECT = USB. The factory default is DATA (the rear jack),
-    so this must change. The value is high confidence; the EX number comes from Yaesu's CAT chart and
-    wasn't tested on air.
+    so this must change. EX010416 was read back on a real FT-DX10 (reply EX0104161; on a station running
+    USB audio) [S9].
   sources:
   - S1
   - S2
   - S3
   - S4
-  confidence: medium
+  - S9
+  confidence: high
 - id: rport-gain
   kind: cat
   name: RPORT GAIN
@@ -151,13 +152,17 @@ steps:
     read: EX010417;
     reply: ^EX010417(\d{3});$
     set: EX010417{value:03};
-  note: Transmit audio gain from the USB codec. Use 30–70 and keep the computer's output level modest.
-    VE3SMA traced harmonics and wrong-sideband output to a low gain (the PRESET's 10) with the PC turned
-    up.
+  note: Transmit audio gain for the rear input that REAR SELECT picks, including USB (the FT-DX10 has
+    no separate USB MOD GAIN; that's an FTDX101 item). Both USB setup guides tune it. Use 30–70 and keep
+    the computer's output level modest. VE3SMA traced harmonics and wrong-sideband output to a low gain
+    (the PRESET's 10) with the PC turned up. EX010417 was read back on a real FT-DX10; that test station
+    runs 005, below this range [S9].
   sources:
   - S1
+  - S2
   - S3
   - S4
+  - S9
   confidence: medium
 - id: data-shift
   kind: cat
@@ -223,13 +228,9 @@ software:
   setting: Audio devices
   value: USB AUDIO CODEC (the radio), capture and playback
 notes: |-
-  Researched from Yaesu's FT-DX10 manuals, setup guides by VE3SMA, VE3SP and M0AWS, and on-air testing with hamstack. Not every value
-  has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Yaesu menu numbers
-  differ between models and firmware; these EX numbers are for the FT-DX10. The menu item names come from the FT-DX10 manual
-  (RPORT GAIN, LCUT/HCUT FREQ); "USB MOD GAIN" is an FTDX101 name.
+  Researched from Yaesu's FT-DX10 manuals, setup guides by VE3SMA, VE3SP and M0AWS, and on-air testing with hamstack. Not every value has been confirmed on air by an openRMS user: the step confidence and sources show what each one rests on. Yaesu menu numbers differ between models and firmware; these EX numbers are for the FT-DX10. The menu item names come from the FT-DX10 manual (RPORT GAIN, LCUT/HCUT FREQ); "USB MOD GAIN" is an FTDX101 name.
 
-  Don't use the radio's PSK mode with sound-card software [S2].
-  No FT-DX10-specific source covers this mode, so the radio settings are carried over from the FT8 sources, and the levels come from the fldigi manual [S7].
+  Don't use the radio's PSK mode with sound-card software [S2]. No FT-DX10-specific source covers this mode, so the radio settings are carried over from the FT8 sources, and the levels come from the fldigi manual [S7].
 tags:
 - researched
 - unverified
@@ -269,4 +270,5 @@ sources:
   title: On-air test of an FT-DX10 with Pat and ardopcf (hamstack)
   author: openRMS / hamstack project
   date: '2026-11-25'
-  note: AGC OFF clipped USB receive audio; AGC AUTO fixed it. EX010408/13/15 reads confirmed.
+  note: 'AGC OFF clipped USB receive audio; AGC AUTO fixed it. Read back on the radio: EX010408/13/14/15/16/17
+    (reply formats confirmed).'

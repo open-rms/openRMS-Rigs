@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { api, opLabel, type Envelope, type PlanStep } from "#lib/api.ts";
+  import { api, opLabel, type Envelope, type PlanStep, type Step } from "#lib/api.ts";
   import { me, signInUrl } from "#lib/auth.ts";
   import * as Card from "#lib/components/ui/card/index.ts";
   import * as Table from "#lib/components/ui/table/index.ts";
@@ -46,6 +46,7 @@
   const auto = $derived(plan.filter((s) => s.kind !== "manual"));
   const manual = $derived(doc?.steps.filter((s) => s.kind === "manual") ?? []);
   const show = (v: unknown) => (typeof v === "boolean" ? (v ? "on" : "off") : String(v ?? ""));
+  const expectText = (e: Step["expect"]) => !e ? "" : [e.one_of?.join(" or "), e.min !== undefined && `≥ ${e.min}`, e.max !== undefined && `≤ ${e.max}`, e.not?.length && `not ${e.not.join("/")}`].filter(Boolean).join(", ");
 
   const blankViewer = { favorite: false, starred: false, starred_at: null, report: null, owner: false };
   async function toggleFavorite() {
@@ -121,7 +122,7 @@
                       {@const src = doc.steps.find((d) => d.id === s.id)}
                       <Table.Row>
                         <Table.Cell><div class="font-medium">{s.name}{@render refs(src?.sources, src?.confidence)}</div>{#if src?.note}<div class="text-muted-foreground max-w-md text-xs">{src.note}</div>{/if}</Table.Cell>
-                        <Table.Cell>{s.check_only ? "check" : src?.display ?? (src?.cat?.values?.[String(src?.value)] ? `${src.cat.values[String(src.value)]} (${src.value})` : show(src?.value))}{#if src?.passband_hz}, {src.passband_hz} Hz{/if}</Table.Cell>
+                        <Table.Cell>{s.check_only ? `check${expectText(src?.expect) ? `: ${expectText(src?.expect)}` : ""}` : src?.display ?? (src?.cat?.values?.[String(src?.value)] ? `${src.cat.values[String(src.value)]} (${src.value})` : show(src?.value))}{#if src?.passband_hz}, {src.passband_hz} Hz{/if}</Table.Cell>
                         <Table.Cell class="space-x-1 whitespace-nowrap">
                           {#if s.safety === "tx"}<Badge variant="destructive">TX</Badge>{/if}
                           {#if s.kind === "cat"}<Badge variant="outline">raw CAT</Badge>{/if}
