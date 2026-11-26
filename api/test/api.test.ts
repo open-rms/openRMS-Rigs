@@ -42,6 +42,15 @@ describe("api", () => {
     expect(j.rigs.map((r: any) => r.macro)).toContain("RIG_MODEL_IC7300");
   });
 
+  it("rig search ignores punctuation and spaces and matches every word", async () => {
+    const names = async (q: string) => (await json(app.request(`/api/v1/rigs?q=${encodeURIComponent(q)}`))).rigs.map((r: any) => r.macro);
+    expect(await names("ic 7300")).toContain("RIG_MODEL_IC7300");
+    expect(await names("IC-7300")).toContain("RIG_MODEL_IC7300");
+    expect(await names("ft-dx10")).toContain("RIG_MODEL_FTDX10");
+    expect(await names("yaesu ftdx 10")).toContain("RIG_MODEL_FTDX10");
+    expect(await names("icom ft-dx10")).not.toContain("RIG_MODEL_FTDX10");
+  });
+
   it("requires auth to create", async () => {
     expect((await app.request("/api/v1/profiles", { method: "POST", body: yaml })).status).toBe(401);
   });

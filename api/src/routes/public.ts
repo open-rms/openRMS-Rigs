@@ -31,7 +31,10 @@ publicRoutes.get("/hamlib", (c) => {
 });
 
 publicRoutes.get("/rigs", async (c) => {
-  const q = c.req.query("q")?.toLowerCase();
+  // Search ignores case, punctuation and spaces, and every word must match: "ic 7300",
+  // "IC-7300" and "ft-dx10" all find their radio.
+  const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const words = (c.req.query("q") ?? "").split(/\s+/).map(norm).filter(Boolean);
   const mfg = c.req.query("mfg");
   const pseudo = c.req.query("include_pseudo") === "true";
   const ver = c.req.query("hamlib");
@@ -44,7 +47,7 @@ publicRoutes.get("/rigs", async (c) => {
   const rigs = cat.rigs
     .filter((r) => pseudo || !r.pseudo)
     .filter((r) => !mfg || r.mfg.toLowerCase() === mfg.toLowerCase())
-    .filter((r) => !q || `${r.mfg} ${r.name} ${r.macro}`.toLowerCase().includes(q))
+    .filter((r) => { const hay = norm(`${r.mfg} ${r.name} ${r.macro}`); return words.every((w) => hay.includes(w)); })
     .map((r) => ({ macro: r.macro, hamlib_model: r.model, mfg: r.mfg, name: r.name, status: r.status, pseudo: r.pseudo, profiles: counts.get(r.macro) ?? 0 }));
   cacheable(c, 300);
   return c.json({ hamlib: cat.hamlibVersion, count: rigs.length, rigs });
