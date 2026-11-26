@@ -1,0 +1,352 @@
+schema: openrms-rigs/profile/v1
+title: IC-7300 RTTY (AFSK) with fldigi
+summary: Audio-frequency RTTY through the USB codec in USB-D. Built on the FT8 sources; little IC-7300-specific
+  RTTY material exists.
+rig:
+  macro: RIG_MODEL_IC7300
+  hamlib_model: 3073
+  mfg: Icom
+  name: IC-7300
+  firmware: '>=1.40'
+operation: rtty
+connection: usb
+interface: built-in USB codec
+hamlib: '>=4.6'
+audio:
+  tx_note: 'No ALC on PSK or AFSK: back off from the first ALC movement.'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: USB-D (AFSK through the USB codec, not the radio's FSK RTTY mode).
+  sources:
+  - S1
+  - S8
+  - S11
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  value: 2
+  display: FAST
+  note: FAST, with USB AF output around 40%. VK3FS runs AGC OFF with a much lower AF output (10–30%),
+    and the WSJT-X guide says 'AGC off or reduce RF gain'. A TAPR test found AGC on costs FT8/WSPR little
+    dynamic range.
+  sources:
+  - S8
+  - S12
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  value: false
+  sources:
+  - S4
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  value: false
+  sources:
+  - S4
+  confidence: medium
+- id: usb-af
+  kind: level
+  name: USB_AF
+  value: 0.4
+  unit: fraction
+  display: 40%
+  expect:
+    min: 0.1
+    max: 0.6
+  note: 'ACC/USB AF Output Level: the receive audio to the computer. 40% with AGC FAST; 10–30% if you
+    run AGC OFF. Sources range widely (default 50%).'
+  sources:
+  - S4
+  - S8
+  confidence: medium
+- id: data-mod
+  kind: manual
+  name: DATA MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > DATA MOD
+    value: USB
+  note: The default is ACC; it must change for USB audio.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S6
+  - S7
+  - S8
+  - S10
+  - S11
+  confidence: high
+- id: data-off-mod
+  kind: manual
+  name: DATA OFF MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > DATA OFF MOD
+    value: MIC,ACC (default)
+  note: Leaves the mic working in voice modes. The fldigi wiki and The Stingy Ham use MIC.
+  sources:
+  - S1
+  - S4
+  - S5
+  - S6
+  - S7
+  confidence: high
+- id: usb-mod
+  kind: manual
+  name: USB MOD Level
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > USB MOD Level
+    value: 40% to start, then adjust for minimal ALC
+  note: Sources range from 28% to 50% (one uses 85%); the default is 50%. Set it with the ALC meter, not
+    by number.
+  sources:
+  - S4
+  - S5
+  - S8
+  confidence: medium
+- id: output-select
+  kind: manual
+  name: ACC/USB Output Select
+  manual:
+    menu: MENU » SET > Connectors > ACC/USB Output Select
+    value: AF
+  sources:
+  - S4
+  - S5
+  - S7
+  - S8
+  - S11
+  confidence: high
+- id: af-sql
+  kind: manual
+  name: ACC/USB AF SQL
+  manual:
+    menu: MENU » SET > Connectors > ACC/USB AF SQL
+    value: OFF (OPEN)
+  sources:
+  - S4
+  - S5
+  - S7
+  - S8
+  - S11
+  confidence: high
+- id: af-beep
+  kind: manual
+  name: ACC/USB AF Beep/Speech Output
+  manual:
+    menu: MENU » SET > Connectors > ACC/USB AF Beep/Speech… Output
+    value: 'OFF'
+  note: Keeps beeps and voice announcements out of the decoder's audio.
+  sources:
+  - S4
+  - S5
+  - S7
+  - S8
+  - S11
+  confidence: high
+- id: usb-serial
+  kind: manual
+  name: USB Serial Function
+  manual:
+    menu: MENU » SET > Connectors > USB Serial Function
+    value: CI-V
+  sources:
+  - S4
+  - S7
+  - S8
+  confidence: high
+- id: usb-send
+  kind: manual
+  name: USB SEND and USB Keying (CW/RTTY)
+  manual:
+    menu: MENU » SET > Connectors > USB SEND/Keying
+    value: OFF, OFF, OFF
+  note: PTT goes over CAT. Setting these to DTR or RTS can key the radio when the port opens, and the
+    manual forbids assigning one line to two functions.
+  sources:
+  - S1
+  - S4
+  - S6
+  - S7
+  - S8
+  confidence: high
+- id: inhibit
+  kind: manual
+  name: Inhibit Timer at USB Connection
+  manual:
+    menu: MENU » SET > Connectors > USB SEND/Keying > Inhibit Timer at USB Connection
+    value: ON (default)
+  note: 'Icom: update the USB driver rather than turning this off.'
+  sources:
+  - S2
+  - S4
+  - S5
+  - S7
+  confidence: high
+- id: civ-port
+  kind: manual
+  name: CI-V USB Port
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Port
+    value: Unlink from [REMOTE]
+  note: 'Icom''s USB note: a linked port is limited to 19200 bps. Unlink is the default from firmware
+    1.40. Two 2018 guides used Link.'
+  sources:
+  - S2
+  - S3
+  - S4
+  - S5
+  - S6
+  - S7
+  - S8
+  confidence: high
+- id: civ-baud
+  kind: manual
+  name: CI-V USB Baud Rate
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Baud Rate
+    value: 115200 (set the software to the same fixed rate)
+  note: Takes effect only when the port is Unlinked. Several guides use 19200; don't use Auto in software.
+  sources:
+  - S4
+  - S6
+  - S7
+  - S8
+  confidence: medium
+- id: civ-address
+  kind: manual
+  name: CI-V Address
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Address
+    value: 94h (default)
+  sources:
+  - S1
+  - S4
+  - S5
+  - S8
+  - S10
+  - S11
+  confidence: high
+- id: civ-transceive
+  kind: manual
+  name: CI-V Transceive
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Transceive
+    value: 'OFF'
+  note: VK3FS and the factory default use ON.
+  sources:
+  - S6
+  - S8
+  - S11
+  confidence: medium
+- id: civ-echo
+  kind: manual
+  name: CI-V USB Echo Back
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Echo Back
+    value: 'ON'
+  note: Hamlib 4.7 detects echo either way; ON suits RigCat/fldigi and other tools [S13].
+  sources:
+  - S4
+  - S6
+  - S7
+  - S8
+  - S11
+  confidence: high
+- id: tbw-data
+  kind: manual
+  name: TX bandwidth (SSB-D)
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB-D > TBW
+    value: 300–2700 Hz (default)
+  note: No source tunes it. Tone Control is disabled in data mode from firmware 1.40.
+  sources:
+  - S2
+  confidence: medium
+software:
+- app: fldigi
+  setting: Rig control
+  value: flrig, or RigCat with IC7300.xml and 'Commands are Echoed' ticked (needs CI-V USB Echo Back ON)
+  note: Hamlib in fldigi isn't covered by the sources [S8] [S11].
+- app: fldigi
+  setting: PTT
+  value: CAT
+- app: fldigi
+  setting: Audio devices
+  value: USB Audio CODEC (the radio)
+- app: fldigi
+  setting: RTTY tones
+  value: 2125/2295 Hz (170 Hz shift)
+  note: From the manual's AFSK illustration [S1].
+notes: |-
+  Researched from Icom's IC-7300 manual, firmware notes and USB application note, plus setup guides by VK3FS, AA4TE, VA3QT, the fldigi wiki and others listed under Sources. Not yet confirmed on air by an openRMS user: check the step confidence. Written for firmware 1.40 or newer (1.30 added the SSB-D TBW and the USB SEND/Keying screen; 1.40 made Unlink the CI-V USB default) [S2]. This is the original IC-7300; the IC-7300MK2 has different menus and CI-V address.
+
+  USB Keying (RTTY) is only for FSK and stays OFF [S1] [S6]. The radio's own RTTY mark/shift/polarity settings belong to its internal FSK mode, not USB-D AFSK. No source gave an IC-7300 filter width for RTTY.
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7300 Full Manual (Advanced, edition 11a)
+  author: Icom Inc.
+  url: https://icomeurope.com/wp-content/uploads/2023/04/IC-7300_ENG_IM_Advanced_11a_web.pdf
+  note: Also read via ManualsLib.
+- id: S2
+  title: IC-7300 firmware 1.30 and 1.40/1.41 information sheets
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7300_ENG_FirmUpInfo-en.pdf
+- id: S3
+  title: Tips for the USB port settings (reference manual)
+  author: Icom Inc.
+  url: https://www.qsl.net/a/ab4oj/dl/usb_port_settings_v1_0.pdf
+  date: 2016-03
+- id: S4
+  title: Icom IC-7300 Digital setup for WSJT-X
+  author: Andrew VK3FS
+  url: https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/
+  date: 2021-12
+- id: S5
+  title: 'AA4TE Field Guide: WSJT-X & IC-7300, and PAT/VARA with the IC-7300'
+  author: AA4TE
+  url: https://qsl.net/aa4te/7300set.html
+  note: See also qsl.net/aa4te/7300pat.html.
+- id: S6
+  title: IC-7300 USB Setup Configuration
+  author: Ham Radio Deluxe Support
+  url: https://support.hamradiodeluxe.com/support/solutions/articles/51000054679
+  date: 2024-03
+- id: S7
+  title: IC-7300/7610 Winlink Set-Up v1.0
+  author: Ian Snow VA3QT (via winlink.org)
+  url: https://www.winlink.org/sites/default/files/RMSE_FORMS/ic-7300_7610_set-up.ver1_.0.pdf
+  date: 2020-08
+- id: S8
+  title: 7300_howto (fldigi project wiki)
+  author: AE5ZA and fldigi wiki contributors
+  url: https://sourceforge.net/p/fldigi/wiki/7300_howto
+  date: '2021'
+- id: S10
+  title: Operating in the FT8 mode with the IC-7300
+  author: FB News editorial staff
+  url: https://fbnews.jp/201805/technical_en/
+  date: 2018-05
+- id: S11
+  title: How to set up the Icom 7300 for Digital Modes with FLDIGI in Windows
+  author: Derek KE0EYJ/HL1ZIX (The Stingy Ham)
+  url: https://thestingyham.blogspot.com/2018/01/how-to-set-up-icom-7300-for-digital.html
+  date: 2018-01
+- id: S12
+  title: Dynamic Range tests of WSJT-X and WSPR on 630m using AGC with IC-7300 (TAPR DCC 2018)
+  author: TAPR DCC 2018 proceedings
+  url: https://files.tapr.org/meetings/DCC_2018/DCC2018-09.pdf
+  date: '2018'

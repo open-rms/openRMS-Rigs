@@ -1,0 +1,166 @@
+schema: openrms-rigs/profile/v1
+title: IC-7300 CW with paddles (semi break-in)
+summary: Icom's keyer defaults with a softer 6 ms rise time against key clicks, and amplifier notes from
+  QST and DJ0IP.
+rig:
+  macro: RIG_MODEL_IC7300
+  hamlib_model: 3073
+  mfg: Icom
+  name: IC-7300
+  firmware: '>=1.40'
+operation: cw
+connection: usb
+interface: paddle on the KEY jack
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 500
+  note: FIL2 is 500 Hz by default; use 250 Hz SHARP on crowded bands (QST and Farson found no ringing).
+  sources:
+  - S15
+  - S1
+  - S16
+  - S18
+  confidence: high
+- id: keyer-type
+  kind: parm
+  name: KEYERTYPE
+  value: PADDLE
+  note: The default; use STRAIGHT with an external keyer.
+  sources:
+  - S15
+  - S1
+  confidence: high
+- id: polarity
+  kind: manual
+  name: Paddle polarity
+  manual:
+    menu: MENU » KEYER > EDIT/SET > CW-KEY SET > Paddle Polarity
+    value: Normal (right paddle = dash)
+  sources:
+  - S1
+  confidence: high
+- id: ratio
+  kind: manual
+  name: Dot/dash ratio
+  safety: tx
+  manual:
+    menu: … > CW-KEY SET > Dot/Dash Ratio
+    value: 1:1:3.0 (default)
+  sources:
+  - S1
+  confidence: high
+- id: rise
+  kind: manual
+  name: Rise time
+  safety: tx
+  manual:
+    menu: … > CW-KEY SET > Rise Time
+    value: 6 ms
+  note: DJ0IP found the 4 ms default causes key clicks and recommends at least 6 ms; Farson also heard
+    a slight thump at the shorter settings.
+  sources:
+  - S21
+  - S18
+  confidence: medium
+- id: sidetone
+  kind: manual
+  name: Side tone level
+  manual:
+    menu: … > CW-KEY SET > Side Tone Level
+    value: 50% (default)
+  sources:
+  - S1
+  confidence: high
+- id: break-in
+  kind: manual
+  name: Break-in
+  manual:
+    menu: VOX/BK-IN key
+    value: BKIN (semi break-in)
+  note: 'QST measured 35 ms QSK turnaround and about 3 ms of RF after the amp key line opens: full break-in
+    can hot-switch a fast amplifier. Profiles never switch break-in automatically.'
+  sources:
+  - S16
+  - S17
+  confidence: medium
+- id: tx-delay
+  kind: manual
+  name: TX Delay (with an amplifier)
+  safety: tx
+  manual:
+    menu: MENU » SET > Function > TX Delay (HF/50M)
+    value: 10–15 ms
+  note: Gives an external amplifier's relay time to settle. Default OFF.
+  sources:
+  - S16
+  confidence: medium
+- id: ip-plus
+  kind: manual
+  name: IP+
+  manual:
+    menu: FUNCTION > IP+
+    value: OFF; on when strong signals or OVF show up
+  note: IP+ trades sensitivity for intermodulation performance. Sherwood measured a large noise-floor
+    cost on early units and about 1 dB on 2018 units.
+  sources:
+  - S16
+  - S17
+  - S18
+  confidence: high
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: P.AMP/ATT
+    value: OFF on 7 MHz and below; P.AMP1 on higher HF; P.AMP2 mainly for 50 MHz
+  note: Sherwood measured P.AMP1 at about 7 dB and P.AMP2 at about 11 dB. Icom calls P.AMP1 most effective
+    on the HF low bands.
+  sources:
+  - S15
+  - S16
+  - S18
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-7300 manuals, the QST review, lab reports by Rob Sherwood NC0B and Adam Farson VA7OJ, and operator articles listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user. Menu paths follow firmware 1.30+ ('Tone Control/TBW') [S2].
+
+  The IC-7300 has no APF; its Twin Peak Filter is for RTTY [S1]. CW pitch (300–900 Hz) and keyer speed are personal choices; no source here recommends values.
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7300 Full Manual (Advanced, edition 11a)
+  author: Icom Inc.
+  url: https://icomeurope.com/wp-content/uploads/2023/04/IC-7300_ENG_IM_Advanced_11a_web.pdf
+  note: Also read via ManualsLib.
+- id: S2
+  title: IC-7300 firmware 1.30 and 1.40/1.41 information sheets
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7300_ENG_FirmUpInfo-en.pdf
+- id: S15
+  title: IC-7300 Basic Manual (edition 10)
+  author: Icom Inc.
+  url: https://icomuk.co.uk/files/icom/PDF/productManual/IC-7300_ENG_BM_10.pdf
+- id: S16
+  title: 'QST Product Review: Icom IC-7300'
+  author: Steve Ford WB8IMY and the ARRL Lab (QST)
+  url: https://web.archive.org/web/20220117181737/https://www.classicinternational.eu/_clientfiles/info_extra/review-icom-ic-7300-qst-august%202016.pdf
+  date: 2016-08
+- id: S17
+  title: 'Sherwood Engineering HF Test Results: IC-7300 (Rev D)'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/n9ewo/sher_ic7300.pdf
+  date: 2016/2018
+- id: S18
+  title: IC-7300 User Evaluation & Test Report (issue 5)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic7300/7300notes.pdf
+  date: 2020-11
+- id: S21
+  title: Operating CW with the IC-7300 (amp keying)
+  author: DJ0IP
+  url: https://dj0ip.de/app/download/5815650643/IC-7300+Amp+Keying.pdf

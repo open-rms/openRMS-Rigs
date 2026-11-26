@@ -1,0 +1,22 @@
+# Shared source list for the IC-7300 profiles (each profile copies the ones it cites).
+- { id: S1, title: "IC-7300 Full Manual (Advanced, edition 11a)", author: "Icom Inc.", url: "https://icomeurope.com/wp-content/uploads/2023/04/IC-7300_ENG_IM_Advanced_11a_web.pdf", note: "Also read via ManualsLib." }
+- { id: S2, title: "IC-7300 firmware 1.30 and 1.40/1.41 information sheets", author: "Icom Inc.", url: "https://icomfrance.com/uploads/files/produit/not-IC-7300_ENG_FirmUpInfo-en.pdf" }
+- { id: S3, title: "Tips for the USB port settings (reference manual)", author: "Icom Inc.", url: "https://www.qsl.net/a/ab4oj/dl/usb_port_settings_v1_0.pdf", date: "2016-03" }
+- { id: S4, title: "Icom IC-7300 Digital setup for WSJT-X", author: "Andrew VK3FS", url: "https://3fs.net.au/ic-7300/icom-ic-7300-digital-setup-for-wsjt-x/", date: "2021-12" }
+- { id: S5, title: "AA4TE Field Guide: WSJT-X & IC-7300, and PAT/VARA with the IC-7300", author: "AA4TE", url: "https://qsl.net/aa4te/7300set.html", note: "See also qsl.net/aa4te/7300pat.html." }
+- { id: S6, title: "IC-7300 USB Setup Configuration", author: "Ham Radio Deluxe Support", url: "https://support.hamradiodeluxe.com/support/solutions/articles/51000054679", date: "2024-03" }
+- { id: S7, title: "IC-7300/7610 Winlink Set-Up v1.0", author: "Ian Snow VA3QT (via winlink.org)", url: "https://www.winlink.org/sites/default/files/RMSE_FORMS/ic-7300_7610_set-up.ver1_.0.pdf", date: "2020-08" }
+- { id: S8, title: "7300_howto (fldigi project wiki)", author: "AE5ZA and fldigi wiki contributors", url: "https://sourceforge.net/p/fldigi/wiki/7300_howto", date: "2021" }
+- { id: S9, title: "WSJT-X User Guide 2.7.0", author: "Joe Taylor K1JT and the WSJT development group", url: "https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html" }
+- { id: S10, title: "Operating in the FT8 mode with the IC-7300", author: "FB News editorial staff", url: "https://fbnews.jp/201805/technical_en/", date: "2018-05" }
+- { id: S11, title: "How to set up the Icom 7300 for Digital Modes with FLDIGI in Windows", author: "Derek KE0EYJ/HL1ZIX (The Stingy Ham)", url: "https://thestingyham.blogspot.com/2018/01/how-to-set-up-icom-7300-for-digital.html", date: "2018-01" }
+- { id: S12, title: "Dynamic Range tests of WSJT-X and WSPR on 630m using AGC with IC-7300 (TAPR DCC 2018)", author: "TAPR DCC 2018 proceedings", url: "https://files.tapr.org/meetings/DCC_2018/DCC2018-09.pdf", date: "2018" }
+- { id: S13, title: "Hamlib 4.7 source: rigs/icom/icom.c and ic7300.c", author: "Hamlib project", url: "https://github.com/Hamlib/Hamlib/tree/Hamlib-4.7/rigs/icom" }
+- { id: S14, title: "ICOM-7300 FT8 issue of USB-D going to USB on transmit (forum thread)", author: "n1fd.org forum: AB1OC, KC1FNF", date: "2021-04", note: "Thread on the n1fd.org forum; exact URL not recorded." }
+- { id: S15, title: "IC-7300 Basic Manual (edition 10)", author: "Icom Inc.", url: "https://icomuk.co.uk/files/icom/PDF/productManual/IC-7300_ENG_BM_10.pdf" }
+- { id: S16, title: "QST Product Review: Icom IC-7300", author: "Steve Ford WB8IMY and the ARRL Lab (QST)", url: "https://web.archive.org/web/20220117181737/https://www.classicinternational.eu/_clientfiles/info_extra/review-icom-ic-7300-qst-august%202016.pdf", date: "2016-08" }
+- { id: S17, title: "Sherwood Engineering HF Test Results: IC-7300 (Rev D)", author: "Rob Sherwood NC0B", url: "https://www.qsl.net/n9ewo/sher_ic7300.pdf", date: "2016/2018" }
+- { id: S18, title: "IC-7300 User Evaluation & Test Report (issue 5)", author: "Adam Farson VA7OJ/AB4OJ", url: "https://www.qsl.net/ab4oj/icom/ic7300/7300notes.pdf", date: "2020-11" }
+- { id: S19, title: "IC-7300 SSB Voice Setup & Audio Monitor Reference Card", author: "McMinnville ARC / Yamhill County ARES", url: "https://qsl.net/w7owo/YCARES%20Winlink%20Training%20Documents/OptimizingPhoneReferenceCard.pdf", date: "2025-06", note: "Values used; some menu paths on the card are wrong." }
+- { id: S20, title: "Best Icom 7300 Transmit Bandwidth TBW Settings", author: "Rich K0PIR", url: "https://k0pir.us/best-icom-7300-transmit-bandwidth/", date: "2021-01", note: "First published 2017-10; updated 2021-01." }
+- { id: S21, title: "Operating CW with the IC-7300 (amp keying)", author: "DJ0IP", url: "https://dj0ip.de/app/download/5815650643/IC-7300+Amp+Keying.pdf" }
