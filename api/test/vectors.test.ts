@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { paths } from "../src/paths.js";
 import { findRig } from "../src/lib/catalog.js";
 import { buildPlan, checkPlan } from "../src/lib/plan.js";
-import { catProblem, catSafety } from "../src/lib/safety.js";
+import { catProblem, catSafety, catStepProblems } from "../src/lib/safety.js";
 import type { Profile, Scalar, Step } from "../src/lib/profile.js";
 
 type CheckCase = { name: string; step: Step; current: Scalar | null; tolerance: number; status: string };
@@ -13,6 +13,7 @@ type CatCase = { protocol: "ascii" | "civ"; use: "read" | "set"; command: string
 const V = JSON.parse(readFileSync(paths.checkVectors, "utf8")) as {
   check: { rig: string; cases: CheckCase[] };
   cat: { cases: CatCase[] };
+  steps: { cases: { name: string; cat: Parameters<typeof catStepProblems>[0]; valid: boolean; field?: string }[] };
 };
 
 describe("Spec check vectors", () => {
@@ -39,6 +40,18 @@ describe("Spec CAT allow-list vectors", () => {
       if (c.allowed) expect(problem).toBeNull();
       else expect(problem).not.toBeNull();
       if (c.safety) expect(catSafety(c.protocol, c.command)).toBe(c.safety);
+    });
+  }
+});
+
+describe("Spec CAT step vectors (read/set/reply binding)", () => {
+  for (const c of V.steps.cases) {
+    it(c.name, () => {
+      const problems = catStepProblems(c.cat);
+      if (c.valid) expect(problems).toEqual([]);
+      else expect(problems[0]?.field).toBe(c.field);
+      // Every command in a valid step also passes the allow-list.
+      if (c.valid && c.cat.read) expect(catProblem(c.cat.protocol, c.cat.read, "read")).toBeNull();
     });
   }
 });

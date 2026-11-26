@@ -82,3 +82,47 @@ export const CAT_VALUE = new RegExp(CAT_ALLOWLIST.value_pattern);
 /** Hamlib identifiers: level/func/parm names and mode names. */
 export const HAMLIB_NAME = /^[A-Z0-9_]{1,32}$/;
 export const MODE_NAME = /^[A-Z0-9-]{1,16}$/;
+
+/**
+ * Step-level CAT rules (profile.md "Raw CAT allow-list", cat-allowlist.json step_rules). ASCII
+ * CAT can't tell a read from a set by syntax, so a step's commands are bound to each other:
+ * - set: one command, exactly one {value}/{value:NN}, right before the ';' (ascii) or at the end (civ);
+ * - read: the set template with the placeholder removed; without a set, only a read-only family;
+ * - reply: "^" + read without its ';' + one capture group + ";$" (civ: no ';').
+ */
+export function catStepProblems(c: { protocol: "ascii" | "civ"; read?: string; reply?: string; set?: string }): { field: "read" | "set" | "reply"; message: string }[] {
+  const out: { field: "read" | "set" | "reply"; message: string }[] = [];
+  const ascii = c.protocol === "ascii";
+  const term = ascii ? ";" : "";
+  const PH = /\{value(?::\d+)?\}/g;
+  if (c.set !== undefined) {
+    const n = (c.set.match(PH) ?? []).length;
+    const tail = ascii ? /\{value(?::\d+)?\};$/ : /\{value(?::\d+)?\}$/;
+    if (n !== 1 || !tail.test(c.set)) out.push({ field: "set", message: `cat.set needs exactly one {value} or {value:NN}, at the end${ascii ? " just before the ';'" : ""}` });
+    else if (ascii && c.set.split(";").filter(Boolean).length !== 1) out.push({ field: "set", message: "cat.set must be a single command" });
+  }
+  if (c.read !== undefined) {
+    if (ascii && c.read.split(";").filter(Boolean).length !== 1) out.push({ field: "read", message: "cat.read must be a single command" });
+    if (c.set !== undefined) {
+      const expected = c.set.replace(PH, "");
+      if (c.read.toUpperCase() !== expected.toUpperCase()) out.push({ field: "read", message: `cat.read must be the set template without its placeholder ("${expected}"), so a read can never change a setting` });
+    } else {
+      const list = CAT_ALLOWLIST.protocols[c.protocol];
+      const fam = longest(list.families, ascii ? c.read : c.read.toUpperCase());
+      if (!fam || fam.set) out.push({ field: "read", message: "cat.read needs cat.set to check it against (also on check_only steps, where set is never sent), unless the family is read-only" });
+    }
+    if (c.reply === undefined) out.push({ field: "reply", message: "cat.read needs cat.reply (capture group 1 = the value)" });
+  }
+  if (c.reply !== undefined) {
+    if (c.read === undefined) out.push({ field: "reply", message: "cat.reply needs cat.read" });
+    else {
+      const body = ascii ? c.read.replace(/;$/, "") : c.read;
+      const m = /^\^([A-Za-z0-9]*)\(([^()]+)\)(;?)\$$/.exec(c.reply);
+      const groupOk = m && /^[\\A-Za-z0-9[\]{},+*?-]+$/.test(m[2]!);
+      if (!m || !groupOk || m[1]!.toUpperCase() !== body.toUpperCase() || m[3] !== term) {
+        out.push({ field: "reply", message: `cat.reply must be "^${body}(<pattern>)${term}$": the read command${ascii ? " without ';'" : ""}, one capture group, then the end` });
+      }
+    }
+  }
+  return out;
+}

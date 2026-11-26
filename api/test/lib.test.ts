@@ -122,7 +122,7 @@ describe("plan and check", () => {
   it("builds structured steps with rigctld lines", () => {
     const plan = buildPlan(validateProfile(ex("ftdx10-ardop.yaml")).profile!);
     const agc = plan.steps.find((s) => s.id === "agc")!;
-    expect(agc.rigctld).toEqual({ get: "w GT0;", set: "w GT04;" });
+    expect(agc.rigctld).toEqual({ get: "w GT0;", set: "W GT04; 0" });
     expect(agc.readable).toBe(true);
     expect(plan.steps.find((s) => s.id === "data-mod-source")!.safety).toBe("tx");
     expect(plan.steps.find((s) => s.id === "data-shift")!.rigctld).toEqual({ get: "w EX010408;", set: null });

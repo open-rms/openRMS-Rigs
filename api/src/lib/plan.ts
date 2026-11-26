@@ -121,7 +121,7 @@ export function buildPlan(p: Profile, meta: { id?: string; revision?: number } =
         const ascii = c.protocol === "ascii";
         return {
           ...base, readable: !!c.read, cat: { ...c, set_command: setCmd },
-          rigctld: { get: ascii && c.read ? `w ${c.read}` : null, set: ascii && setCmd ? `w ${setCmd}` : null },
+          rigctld: { get: ascii && c.read ? `w ${c.read}` : null, set: ascii && setCmd ? `W ${setCmd} 0` : null },
           text: `${s.name} ${check_only ? checkText(s) : `→ ${c.values?.[String(s.value)] ?? s.value}`} (raw CAT)`,
         };
       }

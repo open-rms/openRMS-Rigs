@@ -7,7 +7,7 @@ import addFormatsImport from "ajv-formats";
 import { parse as parseYaml } from "yaml";
 import { findRig } from "./catalog.js";
 import type { Profile, Scalar, Step } from "./profile.js";
-import { CAT_VALUE, catProblem, catSafety, HAMLIB_NAME, isKeyingFunc, METER_LEVELS, MODE_NAME, sampleOf, SETTABLE_FUNCS, TX_FUNCS, TX_LEVELS } from "./safety.js";
+import { CAT_VALUE, catProblem, catSafety, catStepProblems, HAMLIB_NAME, isKeyingFunc, METER_LEVELS, MODE_NAME, sampleOf, SETTABLE_FUNCS, TX_FUNCS, TX_LEVELS } from "./safety.js";
 import { fillCat } from "./plan.js";
 
 export const schemaPath = paths.profileSchema;
@@ -141,9 +141,7 @@ function checkStep(s: Step, at: (f?: string) => string, errors: Issue[], warning
         break;
       }
       if (settable && !c.set) errors.push({ path: at("/cat/set"), message: "a CAT step that sets a value needs cat.set (or check_only: true)" });
-      if (settable && c.set && s.value !== undefined && !/\{value(:\d+)?\}/.test(c.set)) {
-        errors.push({ path: at("/cat/set"), message: "cat.set must contain {value} or {value:NN}" });
-      }
+      for (const p of catStepProblems(c)) errors.push({ path: at(`/cat/${p.field}`), message: p.message });
       if (c.reply) {
         try { new RegExp(c.reply); } catch { errors.push({ path: at("/cat/reply"), message: "cat.reply is not a valid regular expression" }); }
       }

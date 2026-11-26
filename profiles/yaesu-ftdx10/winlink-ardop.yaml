@@ -210,6 +210,7 @@ steps:
     protocol: ascii
     read: EX010413;
     reply: ^EX010413(\d{3});$
+    set: EX010413{value:03};
   note: Check only. Yaesu's manual describes this as the rear RTTY/DATA jack level, not USB audio; sources
     run it at 0 or 50. The codes are confirmed; the effect on USB audio is not.
   sources:
