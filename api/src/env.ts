@@ -12,5 +12,10 @@ export const env = {
   ISSUERS: (e.OPENRMS_ISSUER ?? "http://localhost:8789").split(",").map((s) => s.trim()).filter(Boolean),
   /** Development only: a local JWKS file replaces issuer discovery (see scripts/dev-token.ts). */
   DEV_JWKS_FILE: e.DEV_JWKS_FILE ?? "",
+  /** This service's Accounts client (client credentials, scope accounts.keys): denylist pull, key use reports, key list. */
+  ACCOUNTS_CLIENT_ID: e.ACCOUNTS_CLIENT_ID ?? "openrms-rigs",
+  ACCOUNTS_CLIENT_SECRET: e.ACCOUNTS_CLIENT_SECRET ?? "",
+  /** Secret for Accounts webhooks (openrms-signature), POST /api/v1/webhooks/accounts. */
+  ACCOUNTS_WEBHOOK_SECRET: e.ACCOUNTS_WEBHOOK_SECRET ?? "",
   SITE_ORIGINS: (e.SITE_ORIGINS ?? "http://localhost:5174").split(",").map((s) => s.trim()).filter(Boolean),
 };

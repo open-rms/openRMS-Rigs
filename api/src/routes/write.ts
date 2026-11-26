@@ -2,13 +2,14 @@
 import { Hono } from "hono";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
-import { isModerator, mintKey, requireAuth, type AuthEnv, type Principal } from "../auth.js";
+import { isModerator, requireAuth, type AuthEnv, type Principal } from "../auth.js";
+import { accountsConfigured, accountsFetch, keysUrl } from "../lib/accounts.js";
 import { fail } from "../lib/http.js";
 import { canSee, envelope, getProfile, initialStatus, isPublic, listProfiles, newId, publicWhere } from "../lib/profiles.js";
 import { parseProfileText, validateProfile } from "../lib/validate.js";
 import type { Context } from "hono";
 
-const { profile, profileRevision, star, report, apiKey, auditLog, favorite } = schema;
+const { profile, profileRevision, star, report, auditLog, favorite } = schema;
 
 export const writeRoutes = new Hono<AuthEnv>();
 
@@ -27,7 +28,7 @@ writeRoutes.get("/me", requireAuth(), (c) => {
   return c.json({ sub: p.sub, callsign: p.callsign ?? null, callsign_verified: p.callsignVerified, role: p.role, via: p.via, moderator: isModerator(p) });
 });
 
-writeRoutes.get("/me/profiles", requireAuth(), async (c) => {
+writeRoutes.get("/me/profiles", requireAuth({ scope: "profiles:read-private" }), async (c) => {
   const { rows, total } = await listProfiles({ mine: true, who: c.get("principal"), limit: 200, offset: 0, sort: "recent" });
   return c.json({ total, profiles: rows.map((r) => envelope(r)) });
 });
@@ -36,7 +37,7 @@ writeRoutes.get("/me/profiles", requireAuth(), async (c) => {
  * Private favorites (bookmarks), newest first. Only the owner sees them and nothing is counted
  * publicly. ?rig= and ?operation= narrow the list (for apps).
  */
-writeRoutes.get("/me/favorites", requireAuth({ tokenOnly: true }), async (c) => {
+writeRoutes.get("/me/favorites", requireAuth({ scope: "favorites" }), async (c) => {
   const who = c.get("principal");
   const where = [eq(favorite.sub, who.sub), or(publicWhere(), eq(profile.ownerSub, who.sub))!];
   const rig = c.req.query("rig"), op = c.req.query("operation");
@@ -56,10 +57,10 @@ async function setFavorite(c: Context<AuthEnv>, on: boolean) {
   else await db.delete(favorite).where(and(eq(favorite.profileId, row.id), eq(favorite.sub, who.sub)));
   return c.json({ favorite: on });
 }
-writeRoutes.put("/profiles/:id/favorite", requireAuth({ tokenOnly: true }), (c) => setFavorite(c, true));
-writeRoutes.delete("/profiles/:id/favorite", requireAuth({ tokenOnly: true }), (c) => setFavorite(c, false));
+writeRoutes.put("/profiles/:id/favorite", requireAuth({ scope: "favorites" }), (c) => setFavorite(c, true));
+writeRoutes.delete("/profiles/:id/favorite", requireAuth({ scope: "favorites" }), (c) => setFavorite(c, false));
 
-writeRoutes.post("/profiles", requireAuth(), async (c) => {
+writeRoutes.post("/profiles", requireAuth({ scope: "profiles:write" }), async (c) => {
   const who = c.get("principal");
   const b = await parseBody(c);
   if (b.err) return b.err;
@@ -90,7 +91,7 @@ writeRoutes.post("/profiles", requireAuth(), async (c) => {
 });
 
 /** A new revision. Owner or moderator. Non-staff edits of a published profile with CAT go back to review. */
-writeRoutes.put("/profiles/:id", requireAuth(), async (c) => {
+writeRoutes.put("/profiles/:id", requireAuth({ scope: "profiles:write" }), async (c) => {
   const who = c.get("principal");
   const row = await getProfile(c.req.param("id"));
   if (!row) return fail(c, 404, "not_found", "no such profile");
@@ -132,7 +133,7 @@ async function setStar(c: Context<AuthEnv>, on: boolean) {
 }
 
 /** "Worked for me" or "didn't work", once per account per revision (re-posting replaces it). */
-writeRoutes.post("/profiles/:id/reports", requireAuth({ tokenOnly: true }), async (c) => {
+writeRoutes.post("/profiles/:id/reports", requireAuth({ scope: "reports:write" }), async (c) => {
   const who = c.get("principal");
   const row = await getProfile(c.req.param("id"));
   if (!row || !isPublic(row)) return fail(c, 404, "not_found", "no such profile");
@@ -167,29 +168,26 @@ writeRoutes.get("/profiles/:id/reports", async (c) => {
   return c.json({ reports: rows });
 });
 
-// ---- ormsr_ keys: signed-in users only, one kind for now ("agent": rig agents that submit profiles) ----
+// ---- API keys: minted and managed at Accounts (identity.md §5); Rigs only lists them ----
 
+/** The signed-in user's Rigs keys, from Accounts (metadata only, never the key). */
 writeRoutes.get("/me/keys", requireAuth({ tokenOnly: true }), async (c) => {
-  const rows = await db.select({ id: apiKey.id, prefix: apiKey.prefix, kind: apiKey.kind, name: apiKey.name, created_at: apiKey.createdAt, last_used_at: apiKey.lastUsedAt })
-    .from(apiKey).where(and(eq(apiKey.ownerSub, c.get("principal").sub), isNull(apiKey.revokedAt)));
-  return c.json({ keys: rows });
+  const manage_url = keysUrl();
+  if (!accountsConfigured()) return c.json({ keys: [], manage_url, available: false });
+  try {
+    const r = await accountsFetch(`/api/v1/users/${encodeURIComponent(c.get("principal").sub)}/keys`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const body = (await r.json()) as { keys?: unknown[] } | unknown[];
+    return c.json({ keys: Array.isArray(body) ? body : body.keys ?? [], manage_url, available: true });
+  } catch (e) {
+    console.error("[rigs keys] listing keys from Accounts failed", e);
+    return c.json({ keys: [], manage_url, available: false });
+  }
 });
 
-writeRoutes.post("/me/keys", requireAuth({ tokenOnly: true }), async (c) => {
-  const b = (await c.req.json().catch(() => ({}))) as { name?: string };
-  const name = (b.name ?? "").trim().slice(0, 60) || "rig agent";
-  const k = mintKey();
-  const id = `key_${k.hash.slice(0, 12)}`;
-  const who = c.get("principal");
-  await db.insert(apiKey).values({ id, prefix: k.prefix, hash: k.hash, kind: "agent", ownerSub: who.sub, ownerCallsign: who.callsign ?? null, name });
-  return c.json({ id, key: k.key, prefix: k.prefix, kind: "agent", name, note: "Shown once. Store it in a 0600 file." }, 201);
-});
-
-writeRoutes.delete("/me/keys/:id", requireAuth({ tokenOnly: true }), async (c) => {
-  const done = await db.update(apiKey).set({ revokedAt: new Date() })
-    .where(and(eq(apiKey.id, c.req.param("id")), eq(apiKey.ownerSub, c.get("principal").sub), isNull(apiKey.revokedAt))).returning();
-  return done.length ? c.body(null, 204) : fail(c, 404, "not_found", "no such key");
-});
+const retired = (c: Context) => fail(c, 410, "gone", `Rigs no longer mints keys. Make and revoke keys for Rigs at ${keysUrl()}.`);
+writeRoutes.post("/me/keys", requireAuth({ tokenOnly: true }), retired);
+writeRoutes.delete("/me/keys/:id", requireAuth({ tokenOnly: true }), retired);
 
 // ---- moderation ----
 

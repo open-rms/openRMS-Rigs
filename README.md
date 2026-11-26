@@ -86,6 +86,10 @@ Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local 
 - `PUBLIC_URL`, `OPENRMS_AUDIENCE`, `OPENRMS_ISSUER`, `SITE_ORIGINS`: see `api/.env.example`.
   The defaults are localhost; set production addresses through the environment.
 - `OPENRMS_SPEC_DIR`: path to the openRMS-Spec checkout (default `../../openRMS-Spec`).
+- `ACCOUNTS_CLIENT_ID` (default `openrms-rigs`) and `ACCOUNTS_CLIENT_SECRET`: Rigs' Accounts
+  client for the revocation pull, key-use reports and the account page's key list. Without the
+  secret, keys still verify and the webhook still revokes; the pull and reports are off.
+- `ACCOUNTS_WEBHOOK_SECRET`: verifies Accounts webhooks (`openrms-signature`).
 - `SITE_DIR`: the built site (default `../site/build`). The API serves `GET /p/{id}` from its
   `index.html` with the profile's title, description and canonical link, and a 404 for ids
   that aren't public. The reverse proxy sends `/p/*` to the API; everything else in the site
@@ -105,7 +109,11 @@ Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local 
 - Rigs are keyed by Hamlib macro. Data is keyed by Accounts `sub`, never by callsign.
 - Every edit is an immutable revision. Unverified callsigns, and any profile with raw CAT (even
   from staff), wait for a moderator. While an edit waits, the last published revision stays public.
-- `ormsr_` keys are minted here (hashed, kind fixed at creation). They can submit and edit
-  profiles. Stars, reports, key management and moderation need a signed-in session.
+- API keys are minted at openRMS Accounts (`ormk_`, https://auth.openrms.dev/keys) and verified
+  here offline. Scopes: `profiles:write`, `profiles:read-private`, `favorites`, `reports:write`,
+  `comments:write` (published at `/.well-known/oauth-protected-resource`). Stars and moderation
+  refuse keys. Revoked keys land in the `key_revocation` table from the `key.revoked` webhook
+  (`POST /api/v1/webhooks/accounts`) and a pull every 5 minutes. Rigs' old `ormsr_` keys are
+  retired; the `api_key` table is kept read-only until a later migration drops it.
 
 See `PLAN.md` for phases and open questions.

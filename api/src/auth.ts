@@ -1,14 +1,14 @@
 // Relying party for openRMS-Accounts (openRMS-Spec/accounts/identity.md).
-// Production verification is @openrms/service-auth (JWKS from OIDC discovery, cached). A local
-// JWKS file (DEV_JWKS_FILE, see scripts/dev-token.ts) replaces it only for tests and offline dev.
-import { randomBytes } from "node:crypto";
-import { hashApiKey, verifyAccessToken as verifyWithAccounts } from "@openrms/service-auth";
+// Production verification is @openrms/service-auth: access tokens and Accounts API keys
+// (ormk_, §5) both verify offline against the issuer's JWKS. A local JWKS file (DEV_JWKS_FILE,
+// see scripts/dev-token.ts) replaces discovery only for tests and offline dev.
+import { KEY_PREFIX, KEY_TYP, TokenError, verifyBearer } from "@openrms/service-auth";
 import { readFileSync } from "node:fs";
 import { createLocalJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
-import { and, eq, isNull } from "drizzle-orm";
 import type { Context, MiddlewareHandler } from "hono";
-import { db, schema } from "./db/index.js";
 import { env } from "./env.js";
+import { isRevoked, noteKeyUse, type KeyScope } from "./lib/keys.js";
+import { keysUrl } from "./lib/accounts.js";
 
 export type Claims = {
   sub: string;
@@ -18,62 +18,101 @@ export type Claims = {
   clubs?: { id: string; callsign: string; role: string; verified: boolean }[];
   role?: "user" | "moderator" | "admin" | "superadmin";
 };
+type KeyClaims = { sub: string; aud: string; scope: string[]; jti: string; exp: number; callsign?: string };
+type Verified = { kind: "access"; claims: Claims } | { kind: "key"; claims: KeyClaims };
 
 let devKeys: JWTVerifyGetKey | undefined;
-const keysFor = async (_issuer: string): Promise<JWTVerifyGetKey> =>
-  (devKeys ??= createLocalJWKSet(JSON.parse(readFileSync(env.DEV_JWKS_FILE, "utf8"))));
+const devKeySet = (): JWTVerifyGetKey => (devKeys ??= createLocalJWKSet(JSON.parse(readFileSync(env.DEV_JWKS_FILE, "utf8"))));
 
-export async function verifyAccessToken(token: string, opts: { audience: string; issuers?: string[] }): Promise<Claims> {
-  const issuers = opts.issuers ?? env.ISSUERS;
-  if (!env.DEV_JWKS_FILE) return (await verifyWithAccounts(token, { audience: opts.audience, issuers })) as unknown as Claims;
-  const [, body] = token.split(".");
+/** Development/test twin of service-auth's verifyBearer, against the local JWKS. */
+async function verifyDev(token: string, audience: string): Promise<Verified> {
+  const isKey = token.startsWith(KEY_PREFIX);
+  const jwt = isKey ? token.slice(KEY_PREFIX.length) : token;
+  const [, body] = jwt.split(".");
   const iss = body ? (JSON.parse(Buffer.from(body, "base64url").toString()) as { iss?: string }).iss : undefined;
-  if (!iss || !issuers.includes(iss)) throw new Error("untrusted issuer");
-  const { payload } = await jwtVerify(token, await keysFor(iss), { issuer: iss, audience: opts.audience });
-  if (typeof payload.sub !== "string") throw new Error("token has no sub");
-  return payload as unknown as Claims;
+  if (!iss || !env.ISSUERS.includes(iss)) throw new TokenError("untrusted issuer", "untrusted_issuer");
+  const { payload, protectedHeader } = await jwtVerify(jwt, devKeySet(), { issuer: iss, audience });
+  if (typeof payload.sub !== "string") throw new TokenError("token has no sub", "invalid");
+  if (!isKey) {
+    if (protectedHeader.typ === KEY_TYP || payload.token_use === "api_key") throw new TokenError("an API key needs the ormk_ prefix", "invalid");
+    return { kind: "access", claims: payload as unknown as Claims };
+  }
+  if (protectedHeader.typ !== KEY_TYP || payload.token_use !== "api_key") throw new TokenError("not an API key", "invalid");
+  if (typeof payload.jti !== "string" || !payload.jti) throw new TokenError("API key has no jti", "invalid");
+  if (Array.isArray(payload.aud) && payload.aud.length !== 1) throw new TokenError("an API key has exactly one audience", "invalid");
+  if (await isRevoked(payload.jti)) throw new TokenError("API key revoked", "revoked");
+  const scope = typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : ((payload.scope as string[]) ?? []);
+  return { kind: "key", claims: { ...(payload as unknown as KeyClaims), aud: audience, scope } };
 }
 
-// ---- ormsr_ API keys (identity.md §5) ----
-
-export const KEY_PREFIX = "ormsr_";
-/** Same hashing as every openRMS service (base64url sha256). */
-export const hashKey = hashApiKey;
-
-export function mintKey(): { key: string; prefix: string; hash: string } {
-  const key = KEY_PREFIX + randomBytes(24).toString("base64url");
-  return { key, prefix: key.slice(0, 10), hash: hashKey(key) };
+async function verify(token: string): Promise<Verified> {
+  if (env.DEV_JWKS_FILE) return verifyDev(token, env.AUDIENCE);
+  const r = await verifyBearer(token, { audience: env.AUDIENCE, issuers: env.ISSUERS, isRevoked });
+  if (r.kind === "access") return { kind: "access", claims: r.claims as unknown as Claims };
+  const scope = Array.isArray(r.claims.scope) ? r.claims.scope : String(r.claims.scope ?? "").split(" ").filter(Boolean);
+  return { kind: "key", claims: { ...r.claims, scope } };
 }
 
-export type Principal = { sub: string; callsign?: string; callsignVerified: boolean; role: string; via: "token" | "key"; keyKind?: string };
+/** Access tokens (for Rigs' audience) only, e.g. for scripts/tests that need one. */
+export async function verifyAccessToken(token: string): Promise<Claims> {
+  const r = await verify(token);
+  if (r.kind !== "access") throw new TokenError("an access token is needed", "invalid");
+  return r.claims;
+}
 
-async function principalFrom(c: Context): Promise<Principal | null> {
+export type Principal = {
+  sub: string;
+  callsign?: string;
+  callsignVerified: boolean;
+  role: string;
+  via: "token" | "key";
+  /** Key scopes (via "key" only). */
+  scopes?: string[];
+  jti?: string;
+};
+
+/** Rigs' own ormsr_ keys were retired when Accounts started minting keys (identity.md §5.6). */
+const RETIRED = /^ormsr_/;
+type Outcome = { principal: Principal } | { error: string } | null;
+
+async function principalFrom(c: Context): Promise<Outcome> {
   const h = c.req.header("authorization");
-  const bearer = h?.startsWith("Bearer ") ? h.slice(7).trim() : undefined;
-  const key = c.req.header("x-api-key") ?? (bearer?.startsWith(KEY_PREFIX) ? bearer : undefined);
-  if (key) {
-    const [row] = await db.select().from(schema.apiKey)
-      .where(and(eq(schema.apiKey.hash, hashKey(key)), isNull(schema.apiKey.revokedAt))).limit(1);
-    if (!row) return null;
-    await db.update(schema.apiKey).set({ lastUsedAt: new Date() }).where(eq(schema.apiKey.id, row.id));
-    // Keys carry no fresh claims: only the owner's sub. Moderation needs a token.
-    return { sub: row.ownerSub, callsign: row.ownerCallsign ?? undefined, callsignVerified: false, role: "user", via: "key", keyKind: row.kind };
+  const bearer = h && /^Bearer\s+/i.test(h) ? h.replace(/^Bearer\s+/i, "").trim() : undefined;
+  if (c.req.header("x-api-key") || (bearer && RETIRED.test(bearer))) {
+    return { error: `Rigs API keys (ormsr_) are retired. Make an openRMS key for Rigs at ${keysUrl()} and send it as Authorization: Bearer ormk_…` };
   }
   if (!bearer) return null;
   try {
-    const cl = await verifyAccessToken(bearer, { audience: env.AUDIENCE });
-    return { sub: cl.sub, callsign: cl.callsign, callsignVerified: !!cl.callsign_verified, role: cl.role ?? "user", via: "token" };
-  } catch {
+    const r = await verify(bearer);
+    if (r.kind === "key") {
+      noteKeyUse(r.claims.jti);
+      // Keys never carry staff rights or fresh verification: role user, data keyed on sub.
+      return { principal: { sub: r.claims.sub, callsign: r.claims.callsign, callsignVerified: false, role: "user", via: "key", scopes: r.claims.scope, jti: r.claims.jti } };
+    }
+    const cl = r.claims;
+    return { principal: { sub: cl.sub, callsign: cl.callsign, callsignVerified: !!cl.callsign_verified, role: cl.role ?? "user", via: "token" } };
+  } catch (e) {
+    if (e instanceof TokenError && e.code === "revoked") return { error: "this API key has been revoked" };
     return null;
   }
 }
 
+export const hasScope = (p: Principal, scope: KeyScope) => p.via === "token" || !!p.scopes?.includes(scope);
+
 export type AuthEnv = { Variables: { principal: Principal } };
 
-export const requireAuth = (opts: { tokenOnly?: boolean } = {}): MiddlewareHandler<AuthEnv> => async (c, next) => {
-  const p = await principalFrom(c);
-  if (!p) return c.json({ error: { code: "unauthorized", message: "sign in at openRMS Accounts, or send an ormsr_ key" } }, 401);
+/**
+ * `scope`: the key scope a route needs (access tokens always pass).
+ * `tokenOnly`: staff routes and anything not key-grantable; keys get 403 whatever their scopes.
+ */
+export const requireAuth = (opts: { tokenOnly?: boolean; scope?: KeyScope } = {}): MiddlewareHandler<AuthEnv> => async (c, next) => {
+  const o = await principalFrom(c);
+  if (!o || "error" in o) {
+    return c.json({ error: { code: "unauthorized", message: o?.error ?? `sign in at openRMS Accounts, or send an openRMS API key (ormk_…) from ${keysUrl()}` } }, 401);
+  }
+  const p = o.principal;
   if (opts.tokenOnly && p.via !== "token") return c.json({ error: { code: "forbidden", message: "this needs a signed-in session, not an API key" } }, 403);
+  if (opts.scope && !hasScope(p, opts.scope)) return c.json({ error: { code: "insufficient_scope", message: `this API key needs the ${opts.scope} scope` } }, 403);
   c.set("principal", p);
   await next();
 };
@@ -82,7 +121,10 @@ const RANK: Record<string, number> = { user: 0, moderator: 1, admin: 2, superadm
 export const isModerator = (p: Principal) => p.via === "token" && (RANK[p.role] ?? 0) >= 1;
 
 export type MaybeAuthEnv = { Variables: { principal: Principal | null } };
+/** Public reads. A key without profiles:read-private reads like an anonymous visitor. */
 export const optionalAuth: MiddlewareHandler<MaybeAuthEnv> = async (c, next) => {
-  c.set("principal", await principalFrom(c));
+  const o = await principalFrom(c);
+  const p = o && "principal" in o ? o.principal : null;
+  c.set("principal", p && hasScope(p, "profiles:read-private") ? p : null);
   await next();
 };

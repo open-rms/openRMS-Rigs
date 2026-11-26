@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { api, type Envelope } from "#lib/api.ts";
+  import { api, type AccountKey, type Envelope } from "#lib/api.ts";
   import { accountUrl, me, setDevToken, signInUrl, signOut } from "#lib/auth.ts";
   import ProfileCard from "#lib/parts/ProfileCard.svelte";
   import * as Card from "#lib/components/ui/card/index.ts";
@@ -32,20 +32,14 @@
     api.myProfiles().then((r) => (mine = r.profiles));
     if ($me.moderator) api.queue().then((r) => (queue = r.profiles));
   });
-  type Key = Awaited<ReturnType<typeof api.keys>>["keys"][number];
-  let keys = $state<Key[]>([]);
-  let keyName = $state("");
-  let newKey = $state<string | null>(null);
-  $effect(() => { if ($me) api.keys().then((r) => (keys = r.keys)).catch(() => (keys = [])); });
-  async function mint() {
-    const k = await api.mintKey(keyName || "rig agent");
-    newKey = k.key; keyName = "";
-    keys = (await api.keys()).keys;
-  }
-  async function revoke(id: string) {
-    await api.revokeKey(id);
-    keys = (await api.keys()).keys;
-  }
+  let keys = $state<AccountKey[]>([]);
+  let keysAvailable = $state(true);
+  let manageUrl = $state(accountUrl().replace(/\/account.*$/, "") + "/keys");
+  $effect(() => {
+    if (!$me) return;
+    api.keys().then((r) => { keys = r.keys.filter((k) => !k.revoked_at); keysAvailable = r.available; manageUrl = r.manage_url; }).catch(() => (keysAvailable = false));
+  });
+  const day = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : "");
   async function useDev() {
     setDevToken(dev || null);
     me.set(await api.me().catch(() => null));
@@ -82,22 +76,17 @@
     {:else}<p class="text-muted-foreground">None yet. <a href="/submit">Submit one.</a></p>{/each}
   </div>
   <h2 id="keys" class="mb-2 text-lg font-medium">API keys</h2>
-  <p class="text-muted-foreground mb-3 max-w-3xl text-sm">For apps and scripts that submit profiles as you, e.g. <code>RIGS_KEY=… pnpm import-profiles</code>. Keys can submit and edit profiles; they can't star, comment, report or moderate. Profiles submitted with a key go to the review queue.</p>
-  {#if newKey}
-    <div class="bg-primary-soft mb-3 max-w-3xl rounded-md border p-3 text-sm">
-      Your new key, shown once. Store it somewhere safe (a file only you can read):
-      <code class="mt-1 block break-all select-all">{newKey}</code>
-      <Button size="sm" variant="ghost" class="mt-1" onclick={() => (newKey = null)}>I've saved it</Button>
+  <p class="text-muted-foreground mb-3 max-w-3xl text-sm">
+    Keys for apps and scripts (rigctlWeb, hamstack, <code>RIGS_KEY=… pnpm import-profiles</code>) are made at openRMS Accounts. Pick Rigs and tick what the key may do: submit and edit profiles, read your pending ones, favorites, "worked" reports, comments. Keys can never star or moderate. Profiles submitted with a key go to the review queue.
+  </p>
+  <Button class="mb-3" variant="outline" href={manageUrl} target="_blank" rel="noopener">Make or revoke keys at Accounts ↗</Button>
+  {#each keys as k (k.jti)}
+    <div class="flex max-w-3xl flex-wrap items-center gap-3 border-b py-1.5 text-sm">
+      <span class="flex-1 font-medium">{k.name ?? k.jti.slice(0, 8)}</span>
+      {#if k.scopes?.length}<span class="text-muted-foreground font-mono text-xs">{k.scopes.join(" ")}</span>{/if}
+      <span class="text-muted-foreground text-xs">{k.last_used_at ? `used ${day(k.last_used_at)}` : "never used"}{k.expires_at ? ` · expires ${day(k.expires_at)}` : ""}</span>
     </div>
-  {/if}
-  <div class="mb-3 flex max-w-md gap-2"><Input placeholder="Name, e.g. shack PC" bind:value={keyName} /><Button size="sm" onclick={mint}>Create key</Button></div>
-  {#each keys as k (k.id)}
-    <div class="flex max-w-3xl items-center gap-3 border-b py-1.5 text-sm">
-      <code>{k.prefix}…</code><span class="flex-1">{k.name}</span>
-      <span class="text-muted-foreground text-xs">{k.last_used_at ? `used ${new Date(k.last_used_at).toLocaleDateString()}` : "never used"}</span>
-      <Button size="sm" variant="ghost" onclick={() => revoke(k.id)}>Revoke</Button>
-    </div>
-  {:else}<p class="text-muted-foreground mb-8 text-sm">No keys.</p>{/each}
+  {:else}<p class="text-muted-foreground text-sm">{keysAvailable ? "No Rigs keys yet." : "Your keys are listed at Accounts."}</p>{/each}
   <div class="mb-8"></div>
 
   {#if $me.moderator}
@@ -109,7 +98,7 @@
     {:else}<p class="text-muted-foreground">Nothing waiting.</p>{/each}
   {/if}
 {:else}
-  <p class="mb-3">You're not signed in. Sign in to see your profiles and create API keys.</p>
+  <p class="mb-3">You're not signed in. Sign in to see your profiles and API keys.</p>
   <Button href={signInUrl()}>Sign in with your openRMS account</Button>
 {/if}
 

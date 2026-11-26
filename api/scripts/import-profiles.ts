@@ -1,8 +1,9 @@
 // Submits profile YAML/JSON files to a Rigs API as the signed-in account (they're credited to it).
 //
-//   RIGS_API_URL=https://rigs.openrms.dev RIGS_KEY=ormsr_… pnpm import-profiles ../profiles
+//   RIGS_API_URL=https://rigs.openrms.dev RIGS_KEY=ormk_… pnpm import-profiles ../profiles
 //
-// RIGS_KEY is an ormsr_ key from your account page (or RIGS_TOKEN, an Accounts access token).
+// RIGS_KEY is an openRMS API key for Rigs from https://auth.openrms.dev/keys with the scopes
+// profiles:write and profiles:read-private (or RIGS_TOKEN, an Accounts access token).
 // Files starting with "_" are skipped. Profiles you already have (same title) are skipped,
 // unless --update is given: then each one gets a new revision from the file (moderators review
 // it as usual). Add --dry-run to only validate.
@@ -15,8 +16,10 @@ const dry = process.argv.includes("--dry-run");
 const update = process.argv.includes("--update");
 const dirs = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 if (!dirs.length) { console.error("usage: pnpm import-profiles <dir|file>… [--dry-run]"); process.exit(2); }
-if (!dry && !key && !token) { console.error("set RIGS_KEY (ormsr_…) or RIGS_TOKEN"); process.exit(2); }
-const auth: Record<string, string> = key ? { "x-api-key": key } : token ? { Authorization: `Bearer ${token}` } : {};
+if (!dry && !key && !token) { console.error("set RIGS_KEY (ormk_…, from https://auth.openrms.dev/keys) or RIGS_TOKEN"); process.exit(2); }
+if (key && !key.startsWith("ormk_")) { console.error("RIGS_KEY must be an openRMS key (ormk_…); Rigs' own ormsr_ keys are retired"); process.exit(2); }
+const bearer = key ?? token;
+const auth: Record<string, string> = bearer ? { Authorization: `Bearer ${bearer}` } : {};
 
 const files: string[] = [];
 const walk = (p: string) => {

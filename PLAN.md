@@ -20,7 +20,7 @@ for a person with a menu, and over an API for rigctlWeb and hamstack.
 | Steps | Structured kinds: mode, level, func, parm, cat (raw CAT through `send_cmd`, ascii or CI-V), manual (menu path). The rigctld line is a convenience field. |
 | Safety | No keying in profiles, rejected server-side. Functions are an allow-list shared with rigctlWeb. `safety: tx` marks steps that change transmit behaviour. |
 | Ratings | "Worked for me" reports (with firmware, Hamlib, interface) rank first; stars come second. Both point at revisions. |
-| Auth | Accounts JWTs, verified offline through JWKS with `@openrms/service-auth` (a stub issuer is used in tests only). Rigs mints `ormsr_` keys itself. |
+| Auth | Accounts JWTs, verified offline through JWKS with `@openrms/service-auth` (a stub issuer is used in tests only). API keys are minted by Accounts (`ormk_`, scoped to Rigs) and verified offline with a persisted revocation list; Rigs' own `ormsr_` keys are retired. |
 | Stack | API: Hono + Drizzle + ajv + jose. Site: SvelteKit (static) + Tailwind + shadcn-svelte, the same versions as openRMS-Site. |
 
 Requirements adopted from peer projects (2026-11-25):

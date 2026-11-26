@@ -7,9 +7,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 process.env.DATABASE_URL ??= "postgres://openrms_rigs:openrms_rigs@127.0.0.1:5442/openrms_rigs_test";
 process.env.DEV_JWKS_FILE = new URL("../.dev/jwks.json", import.meta.url).pathname;
 process.env.OPENRMS_ISSUER = "http://localhost:8789";
+process.env.ACCOUNTS_WEBHOOK_SECRET = "whsec-test";
+process.env.ACCOUNTS_CLIENT_SECRET = "";
 
 const token = (sub: string, call: string, role: string) =>
   execFileSync("node_modules/.bin/tsx", ["scripts/dev-token.ts", sub, call, role], { encoding: "utf8", env: { ...process.env } }).trim().split("\n").pop()!;
+
+const devKey = (sub: string, call: string, scope: string, jti: string) =>
+  execFileSync("node_modules/.bin/tsx", ["scripts/dev-token.ts", "--key", sub, call, scope, jti], { encoding: "utf8", env: { ...process.env } }).trim().split("\n").pop()!;
 
 const yaml = readFileSync(new URL("../../../openRMS-Spec/rigs/examples/ic7300-ft8.yaml", import.meta.url), "utf8");
 
@@ -22,7 +27,7 @@ beforeAll(async () => {
   const db = await import("../src/db/index.js");
   pool = db.pool;
   await migrate();
-  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment CASCADE");
+  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment, key_revocation CASCADE");
   app = (await import("../src/app.js")).createApp();
   user = token("u-1", "K1ABC", "user");
   other = token("u-2", "K2XYZ", "user");
@@ -123,15 +128,57 @@ describe("api", () => {
     expect(r.status).toBe(422);
   });
 
-  it("ormsr_ keys: minted once, work for writes, not for stars or moderation, revocable", async () => {
-    const k = await json(app.request("/api/v1/me/keys", { method: "POST", body: "{}", headers: auth(user, { "content-type": "application/json" }) }));
-    expect(k.key).toMatch(/^ormsr_/);
-    const me = await json(app.request("/api/v1/me", { headers: { "x-api-key": k.key } }));
-    expect(me).toMatchObject({ sub: "u-1", via: "key", callsign: "K1ABC" });
-    expect((await app.request(`/api/v1/profiles/${id}/star`, { method: "PUT", headers: { "x-api-key": k.key } })).status).toBe(403);
-    expect((await app.request("/api/v1/me/keys", { headers: { "x-api-key": k.key } })).status).toBe(403);
-    expect((await app.request(`/api/v1/me/keys/${k.id}`, { method: "DELETE", headers: auth(user) })).status).toBe(204);
-    expect((await app.request("/api/v1/me", { headers: { "x-api-key": k.key } })).status).toBe(401);
+  it("Accounts keys (ormk_): scopes per route, never staff, revocable by webhook", async () => {
+    const write = devKey("u-1", "K1ABC", "profiles:write profiles:read-private", "jti-write");
+    const bare = devKey("u-1", "K1ABC", "comments:write", "jti-bare");
+    const me = await json(app.request("/api/v1/me", { headers: auth(write) }));
+    expect(me).toMatchObject({ sub: "u-1", via: "key", callsign: "K1ABC", moderator: false });
+    expect((await app.request("/api/v1/me/profiles", { headers: auth(write) })).status).toBe(200);
+    // Missing scope → 403 insufficient_scope; token-only routes → 403 for any key.
+    const noScope = await app.request("/api/v1/me/profiles", { headers: auth(bare) });
+    expect(noScope.status).toBe(403);
+    expect((await noScope.json()).error.code).toBe("insufficient_scope");
+    expect((await app.request("/api/v1/me/favorites", { headers: auth(write) })).status).toBe(403);
+    expect((await app.request(`/api/v1/profiles/${id}/star`, { method: "PUT", headers: auth(write) })).status).toBe(403);
+    expect((await app.request("/api/v1/admin/profiles", { headers: auth(devKey("m-1", "W1MOD", "profiles:write", "jti-mod")) })).status).toBe(403);
+    expect((await app.request("/api/v1/me/keys", { headers: auth(write) })).status).toBe(403);
+    // A key for another service is refused.
+    const atlas = execFileSync("node_modules/.bin/tsx", ["scripts/dev-token.ts", "--key", "u-1", "K1ABC", "profiles:write", "jti-atlas"], {
+      encoding: "utf8", env: { ...process.env, OPENRMS_AUDIENCE: "http://localhost:8787" },
+    }).trim().split("\n").pop()!;
+    expect((await app.request("/api/v1/me", { headers: auth(atlas) })).status).toBe(401);
+    // An API key without the ormk_ prefix is not an access token.
+    expect((await app.request("/api/v1/me", { headers: auth(write.slice(5)) })).status).toBe(401);
+    // Revoked through the signed key.revoked webhook (idempotent).
+    const { signWebhook } = await import("@openrms/service-auth");
+    const body = JSON.stringify({ id: "evt-1", type: "key.revoked", createdAt: new Date().toISOString(), data: { jti: "jti-write", aud: "http://localhost:8790", sub: "u-1", exp: Math.floor(Date.now() / 1000) + 86400 } });
+    const hook = (b: string, sig: string) => app.request("/api/v1/webhooks/accounts", { method: "POST", body: b, headers: { "content-type": "application/json", "openrms-signature": sig } });
+    expect((await hook(body, signWebhook(body, "whsec-test"))).status).toBe(204);
+    expect((await hook(body, signWebhook(body, "whsec-test"))).status).toBe(204);
+    expect((await hook(body, signWebhook(body, "wrong-secret"))).status).toBe(401);
+    const revoked = await app.request("/api/v1/me", { headers: auth(write) });
+    expect(revoked.status).toBe(401);
+    expect((await revoked.json()).error.message).toMatch(/revoked/);
+    expect((await app.request("/api/v1/me", { headers: auth(bare) })).status).toBe(200);
+    const fav = devKey("u-1", "K1ABC", "favorites", "jti-fav");
+    expect((await app.request("/api/v1/me/favorites", { headers: auth(fav) })).status).toBe(200);
+  });
+
+  it("retired ormsr_ keys get a pointer to Accounts", async () => {
+    const r = await app.request("/api/v1/me", { headers: { "x-api-key": "ormsr_old" } });
+    expect(r.status).toBe(401);
+    expect((await r.json()).error.message).toMatch(/retired.*\/keys/);
+    expect((await app.request("/api/v1/me/keys", { method: "POST", body: "{}", headers: auth(user, { "content-type": "application/json" }) })).status).toBe(410);
+    const list = await json(app.request("/api/v1/me/keys", { headers: auth(user) }));
+    expect(list).toMatchObject({ keys: [], available: false });
+    expect(list.manage_url).toBe("http://localhost:8789/keys");
+  });
+
+  it("publishes key scopes (RFC 9728), with no staff scopes", async () => {
+    const m = await json(app.request("/.well-known/oauth-protected-resource"));
+    expect(m.resource).toBe("http://localhost:8790");
+    expect(m.openrms_key_scopes.map((s: any) => s.scope)).toEqual(["profiles:write", "profiles:read-private", "favorites", "reports:write", "comments:write"]);
+    expect(JSON.stringify(m)).not.toMatch(/review|moderat|admin/);
   });
 
   it("rejects tokens for another audience", async () => {

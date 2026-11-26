@@ -57,6 +57,7 @@ export const report = pgTable("report", {
 }, (t) => [uniqueIndex("report_one_per_revision").on(t.profileId, t.revision, t.sub)]);
 
 /** ormsr_ keys (identity.md §5): hashed, kind fixed at creation, owner sub. */
+/** Retired ormsr_ keys (identity.md §5.6): read-only since Accounts mints keys; dropped later. */
 export const apiKey = pgTable("api_key", {
   id: text("id").primaryKey(),
   prefix: text("prefix").notNull(),
@@ -103,3 +104,14 @@ export const comment = pgTable("comment", {
   hiddenAt: timestamp("hidden_at", { withTimezone: true }),
   hiddenBySub: text("hidden_by_sub"),
 }, (t) => [index("comment_profile").on(t.profileId, t.createdAt), index("comment_sub").on(t.sub, t.createdAt)]);
+
+/**
+ * Revoked Accounts API keys (identity.md §5.5): a persisted denylist fed by the key.revoked
+ * webhook and a pull every 5 minutes. Rows are pruned once the key has expired anyway.
+ */
+export const keyRevocation = pgTable("key_revocation", {
+  jti: text("jti").primaryKey(),
+  sub: text("sub").notNull(),
+  exp: timestamp("exp", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }).notNull(),
+}, (t) => [index("key_revocation_revoked_at").on(t.revokedAt)]);

@@ -51,7 +51,7 @@ const body = (raw: unknown): string | null => {
   return t.length >= 1 && t.length <= MAX_LEN ? t : null;
 };
 
-commentRoutes.post("/profiles/:id/comments", requireAuth({ tokenOnly: true }), async (c: Context<AuthEnv>) => {
+commentRoutes.post("/profiles/:id/comments", requireAuth({ scope: "comments:write" }), async (c: Context<AuthEnv>) => {
   const who = c.get("principal");
   const row = await getProfile(c.req.param("id")!);
   if (!row || !(isPublic(row) || isPrivileged(row, who))) return fail(c, 404, "not_found", "no such profile");
@@ -79,7 +79,7 @@ async function own(c: Context<AuthEnv>) {
   return r;
 }
 
-commentRoutes.patch("/comments/:cid", requireAuth({ tokenOnly: true }), async (c: Context<AuthEnv>) => {
+commentRoutes.patch("/comments/:cid", requireAuth({ scope: "comments:write" }), async (c: Context<AuthEnv>) => {
   const who = c.get("principal");
   const r = await own(c);
   if (!r || r.deletedAt) return fail(c, 404, "not_found", "no such comment");
@@ -91,7 +91,7 @@ commentRoutes.patch("/comments/:cid", requireAuth({ tokenOnly: true }), async (c
   return c.json(view(u!, who));
 });
 
-commentRoutes.delete("/comments/:cid", requireAuth({ tokenOnly: true }), async (c: Context<AuthEnv>) => {
+commentRoutes.delete("/comments/:cid", requireAuth({ scope: "comments:write" }), async (c: Context<AuthEnv>) => {
   const who = c.get("principal");
   const r = await own(c);
   if (!r || r.deletedAt) return fail(c, 404, "not_found", "no such comment");

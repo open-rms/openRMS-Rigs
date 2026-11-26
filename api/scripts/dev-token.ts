@@ -16,6 +16,22 @@ if (!existsSync(priv)) {
 }
 const jwk = JSON.parse(readFileSync(priv, "utf8"));
 const key = await importJWK(jwk, "ES256");
+// --key: an Accounts-style API key instead (identity.md §5.1):
+//   pnpm dev-token --key [sub] [callsign] ["scope scope"] [jti]
+if (process.argv[2] === "--key") {
+  const [sub = "dev-user-1", callsign = "N0CALL", scope = "profiles:write", jti = `dev-${Date.now()}`] = process.argv.slice(3);
+  const jwt = await new SignJWT({ scope, token_use: "api_key", callsign })
+    .setProtectedHeader({ alg: "ES256", kid: jwk.kid, typ: "openrms-key+jwt" })
+    .setIssuer(process.env.OPENRMS_ISSUER ?? "http://localhost:8789")
+    .setAudience(process.env.OPENRMS_AUDIENCE ?? process.env.PUBLIC_URL ?? "http://localhost:8790")
+    .setSubject(sub)
+    .setJti(jti)
+    .setIssuedAt()
+    .setExpirationTime("90d")
+    .sign(key);
+  console.log(`ormk_${jwt}`);
+  process.exit(0);
+}
 const [sub = "dev-user-1", callsign = "N0CALL", role = "user"] = process.argv.slice(2);
 const token = await new SignJWT({ callsign, callsign_verified: role !== "user", callsign_verified_method: "moderator", clubs: [], role })
   .setProtectedHeader({ alg: "ES256", kid: jwk.kid })

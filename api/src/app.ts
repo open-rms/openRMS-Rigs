@@ -11,6 +11,8 @@ import { writeRoutes } from "./routes/write.js";
 import { commentRoutes } from "./routes/comments.js";
 import { pageRoutes } from "./routes/pages.js";
 import { schemaPath } from "./lib/validate.js";
+import { verifyWebhook } from "@openrms/service-auth";
+import { ingestor, KEY_SCOPES } from "./lib/keys.js";
 
 const specPath = paths.openapi;
 
@@ -37,6 +39,32 @@ export function createApp() {
   app.get("/api/v1/profile.schema.json", (c) =>
     c.body(readFileSync(schemaPath, "utf8"), 200, { "Content-Type": "application/schema+json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600" }));
   app.route("/", pageRoutes);
+  // OAuth Protected Resource Metadata (RFC 9728, identity.md §5.2): Accounts reads the key scopes from here.
+  app.get("/.well-known/oauth-protected-resource", (c) => c.json({
+    resource: env.AUDIENCE,
+    authorization_servers: env.ISSUERS,
+    bearer_methods_supported: ["header"],
+    scopes_supported: KEY_SCOPES.map((s) => s.scope),
+    openrms_key_scopes: KEY_SCOPES,
+  }, 200, { "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" }));
+
+  // Accounts events (identity.md §7). Rigs acts on key.revoked; other events are acknowledged.
+  app.post("/api/v1/webhooks/accounts", async (c) => {
+    if (!env.ACCOUNTS_WEBHOOK_SECRET) return c.json({ error: { code: "unavailable", message: "webhooks not configured" } }, 503);
+    const raw = await c.req.text();
+    let event;
+    try { event = verifyWebhook(raw, c.req.header("openrms-signature"), env.ACCOUNTS_WEBHOOK_SECRET); }
+    catch { return c.json({ error: { code: "unauthorized", message: "bad signature" } }, 401); }
+    try { await ingestor().ingest(event); }
+    catch (e) {
+      // A malformed event won't get better; anything else (e.g. the database) should be retried by Accounts' outbox.
+      if (e instanceof Error && /malformed/.test(e.message)) return c.json({ error: { code: "bad_request", message: "malformed event" } }, 400);
+      console.error("[rigs keys] webhook ingest failed", e);
+      return c.json({ error: { code: "internal", message: "try again" } }, 503);
+    }
+    return c.body(null, 204);
+  });
+
   app.get("/docs", swaggerUI({ url: "/api/v1/openapi.yaml" }));
   app.get("/healthz", (c) => c.json({ ok: true }));
   app.get("/", (c) => c.json({ name: "openRMS Rigs", docs: "/docs", openapi: "/api/v1/openapi.yaml", schema: "/api/v1/profile.schema.json" }));
