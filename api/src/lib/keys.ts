@@ -1,12 +1,12 @@
 // Accounts API keys (ormk_, identity.md §5): the persisted denylist, revocation sync, and
 // batched last-use reports. Keys are verified offline in auth.ts.
 import { RevocationSync, type RevokedKey } from "@openrms/service-auth";
-import { desc, eq, lt, sql } from "drizzle-orm";
+import { eq, lt, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { env } from "../env.js";
 import { accountsConfigured, accountsFetch } from "./accounts.js";
 
-const { keyRevocation } = schema;
+const { keyRevocation, syncState } = schema;
 
 /** Key scopes Rigs grants (published at /.well-known/oauth-protected-resource). Staff actions are never key-grantable. */
 export const KEY_SCOPES = [
@@ -31,10 +31,18 @@ export async function storeRevoked(keys: RevokedKey[]): Promise<void> {
     .onConflictDoNothing();
 }
 
-export async function lastSync(): Promise<string | null> {
-  const [row] = await db.select({ at: keyRevocation.revokedAt }).from(keyRevocation).orderBy(desc(keyRevocation.revokedAt)).limit(1);
-  return row ? row.at.toISOString() : null;
-}
+/** The revocation pull cursor, owned by RevocationSync (only pulls move it, never webhooks). */
+const CURSOR = "keys.revocation_cursor";
+export const revocationCursor = {
+  load: async (): Promise<string | null> => {
+    const [row] = await db.select({ v: syncState.value }).from(syncState).where(eq(syncState.key, CURSOR)).limit(1);
+    return row?.v ?? null;
+  },
+  save: async (iso: string): Promise<void> => {
+    await db.insert(syncState).values({ key: CURSOR, value: iso })
+      .onConflictDoUpdate({ target: syncState.key, set: { value: iso, updatedAt: new Date() } });
+  },
+};
 
 /** Expired keys are refused anyway; their rows can go. */
 export const pruneRevoked = () => db.delete(keyRevocation).where(lt(keyRevocation.exp, sql`now()`));
@@ -68,7 +76,7 @@ export async function startKeyServices(): Promise<void> {
     log("ACCOUNTS_CLIENT_SECRET not set: no revocation pull or key-use reports (webhook only)");
     return;
   }
-  sync = new RevocationSync({ issuer: env.ISSUERS[0], clientId: env.ACCOUNTS_CLIENT_ID, clientSecret: env.ACCOUNTS_CLIENT_SECRET, store: storeRevoked, lastSync, log });
+  sync = new RevocationSync({ issuer: env.ISSUERS[0], clientId: env.ACCOUNTS_CLIENT_ID, clientSecret: env.ACCOUNTS_CLIENT_SECRET, store: storeRevoked, cursor: revocationCursor, log });
   await sync.start();
   const t = setInterval(() => {
     flushKeyUse().catch((e) => log("key-use report failed", e));

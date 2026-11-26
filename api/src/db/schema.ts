@@ -115,3 +115,10 @@ export const keyRevocation = pgTable("key_revocation", {
   exp: timestamp("exp", { withTimezone: true }).notNull(),
   revokedAt: timestamp("revoked_at", { withTimezone: true }).notNull(),
 }, (t) => [index("key_revocation_revoked_at").on(t.revokedAt)]);
+
+/** Small service state that must survive restarts, e.g. the key-revocation pull cursor. */
+export const syncState = pgTable("sync_state", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -27,7 +27,7 @@ beforeAll(async () => {
   const db = await import("../src/db/index.js");
   pool = db.pool;
   await migrate();
-  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment, key_revocation CASCADE");
+  await pool.query("TRUNCATE profile, profile_revision, star, report, api_key, audit_log, favorite, comment, key_revocation, sync_state CASCADE");
   app = (await import("../src/app.js")).createApp();
   user = token("u-1", "K1ABC", "user");
   other = token("u-2", "K2XYZ", "user");
@@ -162,6 +162,14 @@ describe("api", () => {
     expect((await app.request("/api/v1/me", { headers: auth(bare) })).status).toBe(200);
     const fav = devKey("u-1", "K1ABC", "favorites", "jti-fav");
     expect((await app.request("/api/v1/me/favorites", { headers: auth(fav) })).status).toBe(200);
+  });
+
+  it("the revocation pull cursor persists, and webhooks don't move it", async () => {
+    const { revocationCursor } = await import("../src/lib/keys.js");
+    expect(await revocationCursor.load()).toBeNull(); // the webhook in the previous test stored a revocation, not a cursor
+    await revocationCursor.save("2026-11-26T12:00:00.000Z");
+    await revocationCursor.save("2026-11-26T12:05:00.000Z");
+    expect(await revocationCursor.load()).toBe("2026-11-26T12:05:00.000Z");
   });
 
   it("retired ormsr_ keys get a pointer to Accounts", async () => {
