@@ -20,6 +20,7 @@ Researched example profiles, one folder per radio:
 | `icom-ic7300/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW |
 | `icom-ic7300mk2/` | FT8/FT4 over USB-C, FT8 over the LAN port, SSB, CW |
 | `icom-ic7610/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW (note: Hamlib picks USB-D1, whose MOD source must be set to USB) |
+| `icom-ic705/` | FT8/FT4 over USB and over Wi-Fi (wfview/kappanhang/RS-BA1), RTTY (AFSK), PSK31, Winlink VARA HF, Winlink ARDOP, SSB, AM, CW; battery 5 W limit noted |
 | `icom-ic706mkii/` | FT8/FT4, RTTY (AFSK), PSK31, Winlink VARA HF, SSB, AM, CW, all through an external ACC-port sound interface (Hamlib can only set mode on this radio) |
 
 They were compiled on 2026-11-25 by comparing the manufacturers' manuals with independent setup

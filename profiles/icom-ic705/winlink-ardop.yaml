@@ -1,0 +1,340 @@
+schema: openrms-rigs/profile/v1
+title: IC-705 Winlink over ARDOP (Winlink Express or Pat)
+summary: Winlink over ARDOP through the IC-705's USB codec, after OH8STN's Winlink Express setup and the manuals.
+rig:
+  macro: RIG_MODEL_IC705
+  hamlib_model: 3085
+  mfg: Icom
+  name: IC-705
+  firmware: '>=1.20'
+operation: winlink-ardop
+connection: usb
+interface: built-in USB codec (micro-USB port)
+hamlib: '>=4.6'
+audio:
+  tx_note: 'Little ALC: OH8STN aims for 1–10% of the ALC scale.'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: USB-D. The IC-705 has a single data mode (LSB-D/USB-D/AM-D/FM-D), and Hamlib's PKTUSB sends data mode
+    01 with it, which selects USB-D.
+  sources:
+  - S1
+  - S9
+  - S15
+  confidence: high
+- id: fil1
+  kind: manual
+  name: Filter FIL1 (USB-D)
+  manual:
+    menu: Filter icon (touch 1 s) > FIL1 > BW, then MAIN DIAL
+    value: 3.0 kHz (SSB-D default); 3.6 kHz is the maximum
+  note: SSB-D filters default to FIL1 3.0 kHz, FIL2 1.2 kHz, FIL3 500 Hz, so FIL1 already covers a sub-band.
+    BotanicFields widens it to 3.6 kHz and sets WSJT-X's receive range to match.
+  sources:
+  - S1
+  - S8
+  confidence: high
+- id: nb-off
+  kind: func
+  name: NB
+  menu:
+  - FUNCTION
+  - NB
+  value: false
+  note: 'Off: Icom notes the noise blanker can distort received signals. No IC-705 source gives a digital-mode
+    setting.'
+  sources:
+  - S1
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  menu:
+  - FUNCTION
+  - NR
+  value: false
+  note: Off as a baseline (general digital-mode practice; S1 gives only the control).
+  sources:
+  - S1
+  confidence: low
+- id: max-tx-pwr
+  kind: manual
+  name: MAX TX PWR
+  safety: tx
+  manual:
+    menu: FUNCTION > page 2 > MAX TX PWR
+    value: 10 W on 13.8 V DC; 5 W is the ceiling on the battery pack
+  note: Also kept per supply as Max TX Power (Battery Pack) and (DC 13.8 V) under MENU » SET > Function; 10
+    W needs the external DC supply. With only the USB cable connected the battery still powers transmit, so
+    a laptop's USB port doesn't lift the 5 W limit. Below about 0 °C battery protection drops output to 0.5
+    W.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: usb-af
+  kind: manual
+  name: USB AF Output Level
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF Output Level
+    value: 50% (default), then adjust to the TNC's receive meter
+  note: 'Receive audio to the computer. No IC-705 ARDOP value was found. Kept as a menu step: the Hamlib 4.7.2
+    catalog doesn''t list USB_AF for the IC-705.'
+  sources:
+  - S1
+  confidence: medium
+- id: usb-output-select
+  kind: manual
+  name: USB Output Select
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > Output Select
+    value: AF (default)
+  note: IF sends a 12 kHz IF signal instead of audio.
+  sources:
+  - S1
+  confidence: high
+- id: usb-af-sql
+  kind: manual
+  name: USB AF SQL
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF SQL
+    value: OFF (Open, default)
+  note: With squelch on, the decoder hears nothing between signals.
+  sources:
+  - S1
+  confidence: high
+- id: usb-af-beep
+  kind: manual
+  name: USB AF Beep/Speech Output
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF Beep/Speech... Output
+    value: OFF (default)
+  note: Keeps beeps and voice announcements out of the decoder's audio.
+  sources:
+  - S1
+  confidence: high
+- id: usb-mod
+  kind: manual
+  name: USB MOD Level
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > USB MOD Level
+    value: 50% (default) to start, then adjust so ALC reads 1–10%
+  note: OH8STN sets the ARDOP TNC's drive for ALC at 1–10% of full scale.
+  sources:
+  - S1
+  - S6
+  confidence: medium
+- id: data-mod
+  kind: manual
+  name: DATA MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA MOD
+    value: USB (default)
+  note: Makes USB audio the modulation source in USB-D. Unlike the IC-7610 there is only one DATA MOD item,
+    and its default is already USB; check it hasn't been left on WLAN from a wireless setup (kappanhang and
+    wfview need WLAN) or set to MIC. Farson's test conditions say 'DATA-1 MOD', which is not an IC-705 menu
+    item; the manuals list only DATA MOD.
+  sources:
+  - S1
+  - S4
+  - S9
+  - S14
+  confidence: high
+- id: data-off-mod
+  kind: manual
+  name: DATA OFF MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA OFF MOD
+    value: MIC,USB (default)
+  note: The source for SSB, AM and FM with data mode off. With the default MIC,USB the computer's audio is
+    also transmitted in plain USB/LSB, so pick MIC if PC sounds could reach the radio. USB or WLAN alone stops
+    the mic and the Voice TX memories. Farson set USB here only for his lab tests.
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: usb-send
+  kind: manual
+  name: USB SEND / USB Keying (CW) / USB Keying (RTTY)
+  manual:
+    menu: MENU » SET > Connectors > USB SEND/Keying
+    value: OFF, OFF, OFF (defaults)
+  note: PTT goes over CI-V (Hamlib's IC-705 backend keys the radio by command), so no DTR/RTS line is needed.
+    Icom warns that SEND or keying may not work for a few seconds after the USB cable is connected, and that
+    a second transceiver plugged into the same PC can send a short SEND pulse.
+  sources:
+  - S1
+  - S2
+  - S15
+  confidence: high
+- id: civ-address
+  kind: manual
+  name: CI-V Address
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Address
+    value: A4h (default)
+  note: Use A4h with software that lists the IC-705 (Hamlib model 3085, fldigi/flrig). QST and OH8STN set 94h
+    or picked the IC-7300 entry because WSJT-X and Winlink Express didn't list the IC-705 then; if you change
+    the address, set the same one in every program.
+  sources:
+  - S1
+  - S5
+  - S6
+  - S7
+  - S15
+  confidence: high
+- id: civ-transceive
+  kind: manual
+  name: CI-V Transceive
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Transceive
+    value: ON (default)
+  note: Icom's default; no IC-705 source read here changes it. It sends a report on the bus whenever a setting
+    changes on the radio.
+  sources:
+  - S1
+  confidence: medium
+- id: civ-echo
+  kind: manual
+  name: CI-V USB Echo Back
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Echo Back
+    value: OFF (default)
+  note: The fldigi wiki says flrig's Echo box must match this item. Hamlib's IC-705 backend checks for echo
+    over USB either way.
+  sources:
+  - S1
+  - S7
+  - S15
+  confidence: high
+- id: tbw-data
+  kind: manual
+  name: TX bandwidth (SSB-D)
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB-D > TBW
+    value: 300–2700 Hz (default); check it covers the modem's bandwidth
+  note: The data-mode transmit passband. Firmware 1.20 and later also disables the receive tone controls in
+    data mode.
+  sources:
+  - S1
+  confidence: medium
+software:
+- app: winlink-express
+  setting: Radio Setup
+  value: Icom IC-7300 entry with the IC-705's CI-V address (A4h)
+  note: OH8STN's workaround while Winlink Express lacked the IC-705; pick an IC-705 entry if your version has
+    one [S6].
+- app: ardop
+  setting: Sound card
+  value: USB Audio CODEC (the radio) for capture and playback
+  note: '[S6]'
+- app: ardop
+  setting: Drive
+  value: adjust for ALC around 1–10%
+  note: '[S6]'
+- app: pat
+  setting: Rig
+  value: rigctld -m 3085 (Hamlib IC-705) on 'IC-705 Serial Port A (CI-V)'
+  note: Model number from the Hamlib catalog [S15]; no IC-705 Pat guide was found.
+notes: "Researched from Icom's IC-705 Basic and Advanced manuals (July 2020) and firmware information sheets\
+  \ up to V1.40, Adam Farson VA7OJ's test report and the QST review, plus the setup notes listed under Sources.\
+  \ Not yet confirmed on air by an openRMS user: check the step confidence. Written for firmware 1.20 or newer\
+  \ (PRESET menu, tone controls disabled in data mode) [S3].\n\nOne micro-USB cable carries CI-V and audio\
+  \ [S4]. The radio shows two virtual COM ports, 'IC-705 Serial Port A (CI-V)' for rig control and 'IC-705\
+  \ Serial Port B' [S2]; on Linux pick the /dev/serial/by-id entry ending in if00 [S7]. Windows needs Icom's\
+  \ USB driver; macOS and Linux don't [S7]. There is no CI-V USB Port or CI-V USB Baud Rate item on the IC-705\
+  \ [S1]: QST found it ran at 9600 bps, BotanicFields sets WSJT-X to its maximum, and Hamlib's backend accepts\
+  \ 4800–19200 [S5] [S8] [S15]. Port B carries GPS data only when 'GPS Out' is set to USB (B) [S1].\n\nOH8STN\
+  \ sets both capture and playback in the ARDOP TNC to the radio's USB Audio CODEC [S6]. On Linux one IC-705\
+  \ user found ardopc holding PTT after transmitting, with no fix in the thread; Direwolf, fldigi and WSJT-X\
+  \ worked on the same setup [S17]. \n\nAGC isn't set: sources disagree. BotanicFields changes the SLOW preset\
+  \ to OFF and runs FT8 with AGC off, and the WSJT-X guide suggests AGC off or reduced RF gain; Farson tested\
+  \ with AGC MID and advises backing off RF gain until OVF goes out [S8] [S16] [S4]. If you run AGC off, watch\
+  \ OVF.\n\nPower and duty cycle: the BP-272 pack (7.4 V, 1880 mAh) gives about 3 hours in Icom's FM test at\
+  \ a 1:1:8 transmit/receive/standby ratio, and output is capped at 5 W on it [S2] [S1]. QST expected a high-duty-cycle\
+  \ mode such as FT8 to shorten battery life [S5]. Farson found the case only warm after long full-power key-down\
+  \ tests [S4]; if the final amplifier overheats the radio reduces power and then inhibits transmit until it\
+  \ cools [S2]. The Time-Out Timer defaults to 5 minutes [S1]."
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-705 Basic Manual (July 2020, A7560D-1EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_manual.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S2
+  title: IC-705 Advanced Manual (July 2020)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_advanced.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S3
+  title: IC-705 firmware information sheets, versions 1.11 to 1.40
+  author: Icom Inc.
+  url: https://qsl.net/y/yo4tnv/Transceivers/IC-705/IC-705_ENG_Info_2.pdf
+  date: 2025-08
+  note: Combined sheet; the V1.20 sheet alone is also at qsl.net/ab4oj/icom/ic705/.
+- id: S4
+  title: IC-705 User Evaluation & Test Report (issue 9)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic705/705notes.pdf
+  date: 2022-05
+- id: S5
+  title: 'Product Review: Icom IC-705 (QST, February 2021)'
+  author: Steve Ford WB8IMY; lab notes Bob Allison WB1GCM (ARRL)
+  url: https://www.arrl.org/files/file/ProductReviewsForDeb/2021/0221.pdf
+  date: 2021-02
+  note: Written before WSJT-X listed the IC-705 (used the IC-7300 entry and CI-V address 94h).
+- id: S6
+  title: Icom IC-705 Winlink Express Setup
+  author: Julian OH8STN
+  url: https://oh8stn.org/blog/2021/02/02/icom-ic-705-winlink-express-setup/
+  date: 2021-02
+  note: Screenshots with some values aren't in the page text.
+- id: S7
+  title: IC-705 Setup (fldigi wiki)
+  author: fldigi project (W1HKJ)
+  url: https://sourceforge.net/p/fldigi/wiki/IC-705%20Setup/
+  note: Undated; screenshots are from April 2021.
+- id: S8
+  title: WSJT-X, Windows 11, IC-705 Settings
+  author: BotanicFields
+  url: https://note.com/botanicfields/n/n2806ea2e9c16
+  date: 2025-06
+- id: S9
+  title: iCom IC-705 Digi-mode Setup for Linux & Mac (WSJT-X)
+  author: TreeRocket blog (u4h15t)
+  url: https://treerocket.wordpress.com/2021/08/25/icom-ic-705-digi-mode-setup-for-linux-mac-wsjt-x/
+  date: 2021-08
+- id: S14
+  title: kappanhang README
+  author: Norbert Varga HA2NON
+  url: https://pkg.go.dev/github.com/nonoo/kappanhang
+  date: 2021-05
+- id: S15
+  title: 'Hamlib 4.7 source: rigs/icom/ic7300.c (ic705_caps) and icom.c'
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/tree/Hamlib-4.7/rigs/icom
+  note: The IC-705 backend lives in ic7300.c in 4.7.
+- id: S16
+  title: WSJT-X User Guide 2.7.0
+  author: Joe Taylor K1JT and the WSJT development group
+  url: https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html
+- id: S17
+  title: ARDOP PTT Hangs (pat-users thread)
+  author: Ethan Crosby and others
+  url: https://groups.google.com/g/pat-users/c/nNZq6htl7c0
+  date: 2022-01
+  note: Unresolved in the visible thread.

@@ -1,0 +1,180 @@
+schema: openrms-rigs/profile/v1
+title: IC-705 SSB phone with the stock HM-243 speaker mic
+summary: Mic gain and compression set the way Icom describes, with Farson VA7OJ's tested compressor level and
+  the factory tone settings he found excellent.
+rig:
+  macro: RIG_MODEL_IC705
+  hamlib_model: 3085
+  mfg: Icom
+  name: IC-705
+  firmware: '>=1.20'
+operation: ssb
+connection: usb
+interface: stock HM-243 speaker microphone
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  check_only: true
+  expect:
+    one_of:
+    - USB
+    - LSB
+  note: LSB below 10 MHz, USB above (general band convention, not from S1, which lists the modes).
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - FUNCTION
+  - AGC (touch to cycle FAST/MID/SLOW)
+  value: 5
+  display: MID
+  note: MID (2.0 s in SSB by default). Icom suggests FAST, or OFF from the AGC screen, when a strong signal
+    hides a weak one; Farson's measurements used MID.
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: mic-gain
+  kind: level
+  name: MICGAIN
+  menu:
+  - MULTI
+  - MIC GAIN
+  value: 0.5
+  unit: fraction
+  display: 50%
+  safety: tx
+  note: Start at 50% (Farson's test setting), then set so ALC swings between 30 and 50% of its scale (Icom's
+    procedure).
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: comp-off
+  kind: func
+  name: COMP
+  menu:
+  - FUNCTION
+  - COMP
+  value: false
+  safety: tx
+  note: 'Off as a baseline: Icom sets mic gain with COMP off first. Switch it on by hand when you want punch.'
+  sources:
+  - S1
+  confidence: medium
+- id: comp-level
+  kind: manual
+  name: COMP level
+  safety: tx
+  manual:
+    menu: FUNCTION > COMP (touch 1 s), then MULTI
+    value: 5, then set by the COMP meter (10–20 dB zone)
+  note: Farson measured about 6 dB of compression on voice peaks at 5 with no ALC overshoot; QST got good audio
+    reports with the processor on.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: medium
+- id: tbw
+  kind: manual
+  name: TBW selection
+  safety: tx
+  manual:
+    menu: FUNCTION > TBW
+    value: WIDE
+  note: Farson's speech tests used WIDE; MID and NAR trade fidelity for punch.
+  sources:
+  - S1
+  - S4
+  confidence: low
+- id: tbw-presets
+  kind: manual
+  name: TBW presets
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB > TBW (WIDE/MID/NAR)
+    value: 100–2900 / 300–2700 / 500–2500 Hz (defaults)
+  note: Farson used the factory presets and default audio settings with the HM-243 and got excellent reports.
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: tx-tone
+  kind: manual
+  name: TX Bass / Treble (SSB)
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB > TX Bass / TX Treble
+    value: 0 / 0 (default)
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: max-tx-pwr
+  kind: manual
+  name: MAX TX PWR
+  safety: tx
+  manual:
+    menu: FUNCTION > page 2 > MAX TX PWR
+    value: 10 W on 13.8 V DC; 5 W on the battery pack
+  note: 10 W needs an external DC supply; with only USB power the battery still powers transmit. Farson's 2
+    m SSB check lost under one S-unit going from 10 W to 5 W.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: FUNCTION > P.AMP/ATT
+    value: OFF on 7 MHz and below; P.AMP1 or P.AMP2 on the higher bands when signals are weak
+  note: 'Farson: the preamp mostly boosts band noise on 7 MHz and below, and should go off whenever OVF lights;
+    then back off RF gain until OVF goes out. Each band remembers its setting.'
+  sources:
+  - S1
+  - S4
+  confidence: medium
+- id: monitor
+  kind: manual
+  name: Monitor
+  manual:
+    menu: MULTI > MONITOR (touch to turn on)
+    value: set the level by ear on headphones
+  sources:
+  - S1
+  confidence: low
+notes: |-
+  Researched from Icom's IC-705 Basic and Advanced manuals (July 2020), Adam Farson VA7OJ's test report and the QST review listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user.
+
+  NB and NR aren't set. Farson rates the IC-705's noise blanker very highly and found it works well with NR; NR level 5 was enough for 2 m SSB band noise, and NR has little further effect above 10 [S4]. Each is on the FUNCTION screen; touch for 1 second to adjust it with MULTI [S1].
+
+  With DATA OFF MOD at its default MIC,USB, audio from a connected computer is transmitted along with the mic in SSB; set it to MIC if that is a risk [S1]. The voice TX memories work only with MIC or MIC,USB there [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-705 Basic Manual (July 2020, A7560D-1EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_manual.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S4
+  title: IC-705 User Evaluation & Test Report (issue 9)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic705/705notes.pdf
+  date: 2022-05
+- id: S5
+  title: 'Product Review: Icom IC-705 (QST, February 2021)'
+  author: Steve Ford WB8IMY; lab notes Bob Allison WB1GCM (ARRL)
+  url: https://www.arrl.org/files/file/ProductReviewsForDeb/2021/0221.pdf
+  date: 2021-02
+  note: Written before WSJT-X listed the IC-705 (used the IC-7300 entry and CI-V address 94h).

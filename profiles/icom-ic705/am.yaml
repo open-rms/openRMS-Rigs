@@ -1,0 +1,120 @@
+schema: openrms-rigs/profile/v1
+title: IC-705 AM phone
+summary: AM at a quarter of the SSB power (2.5 W carrier on DC, 1.25 W on battery), with Farson's receive filter,
+  AGC and NR observations.
+rig:
+  macro: RIG_MODEL_IC705
+  hamlib_model: 3085
+  mfg: Icom
+  name: IC-705
+  firmware: '>=1.20'
+operation: am
+connection: usb
+interface: stock HM-243 speaker microphone
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: AM
+  passband_hz: 0
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - FUNCTION
+  - AGC (touch to cycle FAST/MID/SLOW)
+  value: 5
+  display: MID
+  note: Farson found MID best for average to good signals and FAST better under rapid selective fading.
+  sources:
+  - S4
+  confidence: medium
+- id: carrier
+  kind: manual
+  name: Carrier power
+  safety: tx
+  manual:
+    menu: MULTI > RF POWER (with MAX TX PWR on FUNCTION page 2)
+    value: 2.5 W carrier at 100% on 13.8 V DC; 1.25 W on the battery pack
+  note: 'In AM the maximum is a quarter of the other modes''; the ARRL lab measured 0.025–1.25 W on battery.
+    Farson''s AM tests used a 2.5 W carrier. Kept as a menu step: how Hamlib''s RFPOWER fraction maps to AM
+    carrier isn''t confirmed.'
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: am-tone
+  kind: manual
+  name: AM TX Bass / Treble
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > AM > TX Bass / TX Treble
+    value: 0 / 0 (default)
+  sources:
+  - S1
+  - S4
+  confidence: high
+- id: am-filter
+  kind: manual
+  name: Receive filter
+  manual:
+    menu: Filter icon (FIL1/2/3 = 9 / 6 / 3 kHz)
+    value: FIL2 6 kHz
+  note: Farson found 6 kHz a little smoother and 9 kHz fullest; 3 kHz cut the highs too much.
+  sources:
+  - S1
+  - S4
+  confidence: low
+- id: am-nr
+  kind: manual
+  name: NR level (receive)
+  manual:
+    menu: FUNCTION > NR (touch 1 s), then MULTI
+    value: 6 when the signal is noisy
+  note: 'Farson''s sweet spot for weak AM: less hiss with little loss of highs; above 10 it does nothing more.'
+  sources:
+  - S1
+  - S4
+  confidence: low
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: FUNCTION > P.AMP/ATT
+    value: OFF on 7 MHz and below; P.AMP1 or P.AMP2 on the higher bands when signals are weak
+  note: 'Farson: the preamp mostly boosts band noise on 7 MHz and below, and should go off whenever OVF lights;
+    then back off RF gain until OVF goes out. Each band remembers its setting.'
+  sources:
+  - S1
+  - S4
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-705 Basic and Advanced manuals (July 2020), Adam Farson VA7OJ's test report and the QST review listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user.
+
+  Farson heard the manual notch (MN) distort AM as it was tuned across the carrier, while the auto notch (AN) handled heterodynes well [S4]. With DATA OFF MOD at its default MIC,USB, computer audio is transmitted along with the mic [S1].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-705 Basic Manual (July 2020, A7560D-1EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_manual.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S4
+  title: IC-705 User Evaluation & Test Report (issue 9)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic705/705notes.pdf
+  date: 2022-05
+- id: S5
+  title: 'Product Review: Icom IC-705 (QST, February 2021)'
+  author: Steve Ford WB8IMY; lab notes Bob Allison WB1GCM (ARRL)
+  url: https://www.arrl.org/files/file/ProductReviewsForDeb/2021/0221.pdf
+  date: 2021-02
+  note: Written before WSJT-X listed the IC-705 (used the IC-7300 entry and CI-V address 94h).

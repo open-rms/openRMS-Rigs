@@ -1,0 +1,169 @@
+schema: openrms-rigs/profile/v1
+title: IC-705 CW with paddles (semi break-in)
+summary: Icom's keyer defaults, which Farson measured as clean at the default 4 ms rise time, with break-in
+  notes.
+rig:
+  macro: RIG_MODEL_IC705
+  hamlib_model: 3085
+  mfg: Icom
+  name: IC-705
+  firmware: '>=1.20'
+operation: cw
+connection: usb
+interface: paddle on the side [KEY] jack
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 500
+  note: 'FIL2 is 500 Hz by default (FIL1 1.2 kHz, FIL3 250 Hz). Farson: filters of 500 Hz or narrower get the
+    BPF shape.'
+  sources:
+  - S1
+  - S4
+  confidence: high
+- id: key-type
+  kind: manual
+  name: Key type
+  manual:
+    menu: KEYER > EDIT/SET > CW-KEY SET > Key Type
+    value: Paddle (default)
+  note: 'Choices Straight, Bug, Paddle; select Straight for an external electronic keyer. Kept as a menu step:
+    the Hamlib 4.7.2 catalog doesn''t list KEYERTYPE for the IC-705.'
+  sources:
+  - S1
+  - S2
+  confidence: high
+- id: polarity
+  kind: manual
+  name: Paddle polarity
+  manual:
+    menu: KEYER > EDIT/SET > CW-KEY SET > Paddle Polarity
+    value: Normal (right paddle = dash, default)
+  sources:
+  - S2
+  confidence: high
+- id: ratio
+  kind: manual
+  name: Dot/dash ratio
+  safety: tx
+  manual:
+    menu: KEYER > EDIT/SET > CW-KEY SET > Dot/Dash Ratio
+    value: 1:1:3.0 (default)
+  sources:
+  - S2
+  confidence: high
+- id: rise
+  kind: manual
+  name: Rise time
+  safety: tx
+  manual:
+    menu: KEYER > EDIT/SET > CW-KEY SET > Rise Time
+    value: 4 ms (default)
+  note: Choices 2, 4, 6, 8 ms. Farson measured keying sidebands at all four at 48 wpm and noted a short RF
+    tail on unkeying in QSK; the ARRL lab rated the keying excellent.
+  sources:
+  - S2
+  - S4
+  - S5
+  confidence: medium
+- id: sidetone
+  kind: manual
+  name: Side tone level
+  manual:
+    menu: KEYER > EDIT/SET > CW-KEY SET > Side Tone Level
+    value: 50% (default)
+  sources:
+  - S2
+  confidence: high
+- id: break-in
+  kind: manual
+  name: Break-in
+  manual:
+    menu: VOX/BK-IN key (push to cycle BKIN / F-BKIN / OFF)
+    value: BKIN (semi break-in); F-BKIN for full QSK
+  note: QST found paddles and a straight key smooth in both modes, with an audible T/R relay. Farson could
+    still hear the receiver between dits at about 16 wpm in full break-in. Profiles never switch break-in automatically.
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: medium
+- id: bk-delay
+  kind: manual
+  name: Break-in delay
+  manual:
+    menu: VOX/BK-IN key (hold 1 s) > DELAY, then MULTI
+    value: set by ear for your speed
+  sources:
+  - S1
+  confidence: low
+- id: tx-delay
+  kind: manual
+  name: TX Delay (with an amplifier)
+  safety: tx
+  manual:
+    menu: MENU » SET > Function > TX Delay > HF / 50M / 144M / 430M
+    value: OFF (default); add delay if an amplifier's relay is slower
+  note: 'Icom: set a delay when external equipment switches slower than the radio, to avoid reflected power.'
+  sources:
+  - S1
+  confidence: high
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: FUNCTION > P.AMP/ATT
+    value: OFF on 7 MHz and below; P.AMP1 or P.AMP2 on the higher bands when signals are weak
+  note: 'Farson: the preamp mostly boosts band noise on 7 MHz and below, and should go off whenever OVF lights;
+    then back off RF gain until OVF goes out. Each band remembers its setting.'
+  sources:
+  - S1
+  - S4
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-705 Basic and Advanced manuals (July 2020), Adam Farson VA7OJ's test report and the QST review listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user.
+
+  The IC-705 has no CW APF; Farson suggests the RX HPF/LPF under MENU » SET > Tone Control/TBW > RX to bracket the tone instead [S4]. The AUTOTUNE key pulls in a nearby CW signal [S4] [S3]. Eight keyer memories (M1–M8) and contest serial numbers live on the KEYER screen [S2]. For CW keying from a logger over USB, assign USB Keying (CW) to a DTR or RTS line under MENU » SET > Connectors > USB SEND/Keying [S2]; fldigi can also key over CAT [S7]. This profile uses the paddle and leaves those OFF.
+
+  Output is 5 W on the battery pack and 10 W on 13.8 V DC (MAX TX PWR on FUNCTION page 2) [S1]. Keyer speed runs 6–48 wpm, iambic mode B per the ARRL lab [S5].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-705 Basic Manual (July 2020, A7560D-1EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_manual.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S2
+  title: IC-705 Advanced Manual (July 2020)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic705_advanced.pdf
+  date: 2020-07
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/ (search IC-705).
+- id: S3
+  title: IC-705 firmware information sheets, versions 1.11 to 1.40
+  author: Icom Inc.
+  url: https://qsl.net/y/yo4tnv/Transceivers/IC-705/IC-705_ENG_Info_2.pdf
+  date: 2025-08
+  note: Combined sheet; the V1.20 sheet alone is also at qsl.net/ab4oj/icom/ic705/.
+- id: S4
+  title: IC-705 User Evaluation & Test Report (issue 9)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic705/705notes.pdf
+  date: 2022-05
+- id: S5
+  title: 'Product Review: Icom IC-705 (QST, February 2021)'
+  author: Steve Ford WB8IMY; lab notes Bob Allison WB1GCM (ARRL)
+  url: https://www.arrl.org/files/file/ProductReviewsForDeb/2021/0221.pdf
+  date: 2021-02
+  note: Written before WSJT-X listed the IC-705 (used the IC-7300 entry and CI-V address 94h).
+- id: S7
+  title: IC-705 Setup (fldigi wiki)
+  author: fldigi project (W1HKJ)
+  url: https://sourceforge.net/p/fldigi/wiki/IC-705%20Setup/
+  note: Undated; screenshots are from April 2021.
