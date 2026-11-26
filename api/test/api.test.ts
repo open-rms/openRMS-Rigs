@@ -140,6 +140,17 @@ describe("api", () => {
     expect(mine.plan.steps.find((s: any) => s.id === "power")).toMatchObject({ safety: "tx", readable: true });
   });
 
+  it("serves /p/{id} with the profile title, and a 404 for unknown ids", async () => {
+    const r = await app.request(`/p/${id}`);
+    expect(r.status).toBe(200);
+    const html = await r.text();
+    expect(html).toMatch(/<title>[^<]+ · openRMS Rigs<\/title>/);
+    expect(html).toContain(`<link rel="canonical" href="http://localhost:8790/p/${id}" />`);
+    const missing = await app.request("/p/no-such-profile-000000");
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).toContain("Profile not found");
+  });
+
   it("dump ETag is stable until something changes", async () => {
     const r1 = await app.request("/api/v1/dump.json");
     const etag = r1.headers.get("etag")!;

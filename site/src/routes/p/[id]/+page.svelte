@@ -77,6 +77,8 @@
   {#if confidence}<span class={["ml-1 rounded px-1 text-[10px] uppercase", confidence === "high" ? "bg-primary-soft text-primary" : confidence === "low" ? "bg-muted text-muted-foreground" : "bg-secondary"]} title="How well the sources support this value">{confidence}</span>{/if}
 {/snippet}
 
+<svelte:head><title>{doc ? `${doc.title} · openRMS Rigs` : error ? "Profile not found · openRMS Rigs" : "openRMS Rigs"}</title></svelte:head>
+
 {#if error}<p class="text-destructive">{error}</p>{/if}
 {#if p && doc}
   <div class="mb-6">

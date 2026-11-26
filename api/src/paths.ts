@@ -16,7 +16,10 @@ function findRoot(): string {
 export const ROOT = findRoot();
 /** openRMS-Spec checkout; override with OPENRMS_SPEC_DIR when deployed elsewhere. */
 export const SPEC_DIR = process.env.OPENRMS_SPEC_DIR ?? resolve(ROOT, "../../openRMS-Spec");
+/** Built site (adapter-static output) for server-rendered profile pages; override with SITE_DIR. */
+const SITE_DIR = process.env.SITE_DIR ?? resolve(ROOT, "../site/build");
 export const paths = {
+  siteDir: SITE_DIR,
   catalog: join(ROOT, "catalog") + "/",
   migrations: join(ROOT, "drizzle"),
   profileSchema: join(SPEC_DIR, "rigs/profile.schema.json"),

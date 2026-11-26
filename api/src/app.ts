@@ -9,6 +9,7 @@ import { env } from "./env.js";
 import { publicRoutes } from "./routes/public.js";
 import { writeRoutes } from "./routes/write.js";
 import { commentRoutes } from "./routes/comments.js";
+import { pageRoutes } from "./routes/pages.js";
 import { schemaPath } from "./lib/validate.js";
 
 const specPath = paths.openapi;
@@ -35,6 +36,7 @@ export function createApp() {
   });
   app.get("/api/v1/profile.schema.json", (c) =>
     c.body(readFileSync(schemaPath, "utf8"), 200, { "Content-Type": "application/schema+json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600" }));
+  app.route("/", pageRoutes);
   app.get("/docs", swaggerUI({ url: "/api/v1/openapi.yaml" }));
   app.get("/healthz", (c) => c.json({ ok: true }));
   app.get("/", (c) => c.json({ name: "openRMS Rigs", docs: "/docs", openapi: "/api/v1/openapi.yaml", schema: "/api/v1/profile.schema.json" }));

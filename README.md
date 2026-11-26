@@ -85,6 +85,10 @@ Catalog: `pnpm catalog` rebuilds `catalog/hamlib-<version>.json` from the local 
 - `PUBLIC_URL`, `OPENRMS_AUDIENCE`, `OPENRMS_ISSUER`, `SITE_ORIGINS`: see `api/.env.example`.
   The defaults are localhost; set production addresses through the environment.
 - `OPENRMS_SPEC_DIR`: path to the openRMS-Spec checkout (default `../../openRMS-Spec`).
+- `SITE_DIR`: the built site (default `../site/build`). The API serves `GET /p/{id}` from its
+  `index.html` with the profile's title, description and canonical link, and a 404 for ids
+  that aren't public. The reverse proxy sends `/p/*` to the API; everything else in the site
+  stays static.
 
 ## Rules worth knowing
 
