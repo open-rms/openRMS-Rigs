@@ -1,0 +1,188 @@
+schema: openrms-rigs/profile/v1
+title: IC-7610 SSB phone with the stock HM-219 mic
+summary: Mic gain and compression set the way Icom describes, with TBW and tone values from Farson
+  VA7OJ's HM-219 setup.
+rig:
+  macro: RIG_MODEL_IC7610
+  hamlib_model: 3078
+  mfg: Icom
+  name: IC-7610
+  firmware: '>=1.30'
+operation: ssb
+connection: usb
+interface: stock HM-219 hand mic
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  check_only: true
+  expect:
+    one_of:
+    - USB
+    - LSB
+  note: LSB below 10 MHz, USB above (band convention; 60 m uses USB).
+  sources:
+  - S1
+  - S12
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - Multi-function key group
+  - AGC (touch to cycle FAST/MID/SLOW)
+  value: 5
+  display: MID
+  note: MID (2.0 s in SSB by default). Icom suggests FAST, or OFF from the AGC screen, when a strong signal
+    hides a weak one; Farson's measurements used MID.
+  sources:
+  - S1
+  - S5
+  confidence: low
+- id: mic-gain
+  kind: level
+  name: MICGAIN
+  menu:
+  - MULTI
+  - MIC GAIN
+  value: 0.5
+  unit: fraction
+  display: 50%
+  safety: tx
+  note: Start at 50% (Farson's HM-219 setting), then set so ALC reads 30–50% of its zone (Icom's procedure).
+  sources:
+  - S1
+  - S5
+  confidence: medium
+- id: comp-off
+  kind: func
+  name: COMP
+  menu:
+  - Multi-function key group
+  - COMP
+  value: false
+  safety: tx
+  note: 'Off as a baseline: Icom sets mic gain with COMP off first. Switch it on by hand when you want punch.'
+  sources:
+  - S1
+  confidence: medium
+- id: comp-level
+  kind: manual
+  name: COMP level
+  safety: tx
+  manual:
+    menu: Multi-function key group > COMP (hold 1 s) > LEVEL
+    value: 5, then set by the COMP meter (10–20 dB)
+  note: Farson used 5 with both mics; Icom's target is the 10–20 dB COMP zone.
+  sources:
+  - S1
+  - S5
+  confidence: medium
+- id: tbw
+  kind: manual
+  name: TBW selection
+  safety: tx
+  manual:
+    menu: Multi-function key group > COMP (hold 1 s) > TBW
+    value: WIDE
+  note: Farson's on-air setting.
+  sources:
+  - S1
+  - S5
+  confidence: low
+- id: tbw-wide
+  kind: manual
+  name: TBW WIDE preset
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB > TBW (WIDE)
+    value: 200–2900 Hz (default 100–2900)
+  note: 'Defaults: WIDE 100–2900, MID 300–2700, NAR 500–2500 Hz. Farson raised the low cut to 200 Hz for
+    the HM-219 and kept 100 Hz with a NATO headset mic.'
+  sources:
+  - S1
+  - S5
+  confidence: medium
+- id: tx-tone
+  kind: manual
+  name: TX Bass / Treble (SSB)
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB > TX Bass / TX Treble
+    value: Bass 0, Treble +3 (HM-219)
+  note: Farson's HM-219 setting; distant stations called it excellent. Defaults 0/0.
+  sources:
+  - S1
+  - S5
+  confidence: low
+- id: ip-plus
+  kind: manual
+  name: IP+
+  manual:
+    menu: Multi-function key group > IP+
+    value: OFF; on when strong signals overload the band
+  note: IP+ adds ADC dither for better IMD. Farson measured 3–4 dB worse MDS with it on and no preamp;
+    Sherwood measured about 2.5 dB and guesses it is usually not needed.
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: Multi-function key group > P.AMP
+    value: OFF on 7 MHz and below; P.AMP1 on higher HF; P.AMP2 mainly 50 MHz
+  note: 'Icom: P.AMP1 (about 12 dB) suits the HF low bands, P.AMP2 the higher bands. Farson advises no
+    preamp on 7 MHz and below and turning it off whenever OVF lights. While DIGI-SEL is on, P.AMP is
+    fixed OFF.'
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+- id: monitor
+  kind: manual
+  name: Monitor
+  manual:
+    menu: MULTI > MONITOR (touch MONI to turn it on)
+    value: set the level by ear on headphones
+  sources:
+  - S1
+  confidence: low
+notes: |-
+  Researched from Icom's IC-7610 manuals (2017 first editions) and V1.30 information sheet, and the lab reports by Adam Farson VA7OJ and Rob Sherwood NC0B listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user. Menu paths follow firmware 1.11 and later ('Tone Control/TBW', per Farson and the 1.30 sheet) [S5] [S3].
+
+  NB and NR aren't set: Farson found the IC-7610's noise blanker clean enough to leave on (Level 5, Width 80, Depth 8 at his QTH) and ran NR at 9–10 on noisy 40 m [S5]. Headset: Farson ran a NATO headset at 20% mic gain, COMP 5, Bass +1, Treble +1 [S5]. Those are one tester's settings, not a recommendation.
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7610 Basic Manual (2017 first edition, A7380D-1EX)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_manual.pdf
+  date: 2017-10
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1711/.
+- id: S3
+  title: IC-7610 Version 1.30 information sheet
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7610_ENG_Info_V130_0a-en.pdf
+  date: 2021-04
+- id: S5
+  title: IC-7610 User Evaluation & Test Report (issue 8)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic7610/7610notes.pdf
+  date: 2020-11
+- id: S6
+  title: 'Sherwood Engineering test results: Icom IC-7610'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/ab4oj/icom/ic7610/icom_ic7610_h.pdf
+  date: 2017-12
+- id: S12
+  title: Icom IC-7610 (station guide)
+  author: Nittany Amateur Radio Club
+  url: https://nittany-amateur-radio-club.github.io/station/icom-ic-7610.html
+  date: 2026-05

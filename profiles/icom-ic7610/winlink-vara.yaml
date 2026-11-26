@@ -1,0 +1,382 @@
+schema: openrms-rigs/profile/v1
+title: IC-7610 Winlink over VARA HF (Winlink Express or Pat)
+summary: Winlink over VARA HF through the IC-7610's USB codec, from W0KAH's IC-7610 notes in VA3QT's
+  Winlink set-up and the manuals.
+rig:
+  macro: RIG_MODEL_IC7610
+  hamlib_model: 3078
+  mfg: Icom
+  name: IC-7610
+  firmware: '>=1.30'
+operation: winlink-vara
+connection: usb
+interface: built-in USB codec (rear [USB 1] port)
+hamlib: '>=4.6'
+audio:
+  tx_note: Little or no ALC (Winlink guidance as quoted by VA3QT). Reduce USB MOD Level or VARA's drive
+    until ALC stops moving.
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: PKTUSB
+  passband_hz: 3000
+  note: USB-D. Winlink Express selects USB-D1 itself (W0KAH). When Hamlib sets PKTUSB it sends data mode 01
+    (CI-V 1A 06), which is DATA1, so the radio lands in USB-D1.
+  sources:
+  - S1
+  - S4
+  - S9
+  - S10
+  - S13
+  confidence: high
+- id: fil1
+  kind: manual
+  name: Filter FIL1 (USB-D)
+  manual:
+    menu: FILTER (hold 1 s) > FIL1 > BW, then MAIN DIAL
+    value: 3.0 kHz (data mode default is 1.2 kHz)
+  note: Data mode switches the receiver to the CW filter set (FIL1/2/3 = 1.2 kHz / 500 / 250 Hz), so widen
+    FIL1 before decoding a whole sub-band. FB News uses 3.0 kHz; VA7ST uses 3.6 kHz, the maximum.
+  sources:
+  - S1
+  - S8
+  - S9
+  confidence: high
+- id: agc-not-off
+  kind: level
+  name: AGC_TIME
+  menu:
+  - Multi-function key group
+  - AGC (hold 1 s) > AGC screen
+  check_only: true
+  expect:
+    not:
+    - 0
+  unit: s
+  display: not OFF
+  note: "Checked, not set: warns if the selected AGC preset's time constant is OFF (0). Farson advises
+    against AGC OFF on this direct-sampling radio (it invites ADC overload). The Nittany ARC station runs
+    AGC OFF for digital, and the WSJT-X guide suggests AGC off or reduced RF gain. Keep it on (FAST or
+    MID) unless you watch OVF."
+  sources:
+  - S1
+  - S4
+  - S5
+  - S12
+  - S13
+  - S14
+  confidence: medium
+- id: nb-off
+  kind: func
+  name: NB
+  menu:
+  - Front panel
+  - NB key
+  value: false
+  sources:
+  - S9
+  - S12
+  confidence: medium
+- id: nr-off
+  kind: func
+  name: NR
+  menu:
+  - Front panel
+  - NR key
+  value: false
+  sources:
+  - S9
+  - S12
+  confidence: medium
+- id: usb-af
+  kind: manual
+  name: USB AF Output Level
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF Output Level
+    value: 75%, or what gives about 3/4 scale on VARA's VU meter (default 50%)
+  note: "Receive audio to the computer through [USB 1]. W0KAH's VARA setting, which gave him S/N 22 or more
+    on connects. Kept as a menu step: Hamlib 4.7 doesn't expose USB_AF for the IC-7610."
+  sources:
+  - S1
+  - S10
+  confidence: low
+- id: usb-output-select
+  kind: manual
+  name: USB Output Select
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > Output Select
+    value: AF (default)
+  note: 'IF sends a 12 kHz IF (Farson: for DRM decoders) instead of audio.'
+  sources:
+  - S1
+  - S4
+  - S5
+  confidence: high
+- id: usb-af-sql
+  kind: manual
+  name: USB AF SQL
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF SQL
+    value: OFF (Open, default)
+  note: With squelch on, the decoder hears nothing between signals.
+  sources:
+  - S1
+  - S4
+  confidence: high
+- id: usb-af-beep
+  kind: manual
+  name: USB AF Beep/Speech Output
+  manual:
+    menu: MENU » SET > Connectors > USB AF/IF Output > AF Beep/Speech... Output
+    value: OFF (default)
+  note: Keeps beeps and voice announcements out of the decoder's audio.
+  sources:
+  - S1
+  - S4
+  confidence: high
+- id: usb-mod
+  kind: manual
+  name: USB MOD Level
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > USB MOD Level
+    value: 50% (default) to start, then reduce until ALC stays at zero
+  note: W0KAH reported 75% for sound-card modes and 11% for ARDOP on the same radio, so expect to adjust a
+    lot.
+  sources:
+  - S1
+  - S10
+  confidence: low
+- id: data-off-mod
+  kind: manual
+  name: DATA OFF MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA OFF MOD
+    value: MIC,ACC (default)
+  note: Keeps the mic working in voice modes. With ACC, USB or LAN here, Voice TX memories can't be sent.
+  sources:
+  - S1
+  - S2
+  - S7
+  - S10
+  confidence: high
+- id: data1-mod
+  kind: manual
+  name: DATA1 MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA1 MOD
+    value: USB (default is ACC)
+  note: "Required: Hamlib and Winlink Express put the radio in USB-D1, and with the ACC default the
+    computer's transmit audio goes nowhere. HRD also sets DATA1 to USB. Leave it on ACC only if D1 drives
+    an ACC device (W0KAH's Pactor modem) and you select USB-D2 yourself."
+  sources:
+  - S1
+  - S7
+  - S10
+  - S13
+  confidence: high
+- id: data2-mod
+  kind: manual
+  name: DATA2 MOD
+  safety: tx
+  manual:
+    menu: MENU » SET > Connectors > MOD Input > DATA2 MOD
+    value: USB (default)
+  note: For software or operators that use USB-D2 (FB News, Nittany ARC, OmniRig setups).
+  sources:
+  - S1
+  - S7
+  - S8
+  - S10
+  - S12
+  confidence: high
+- id: usb-send
+  kind: manual
+  name: USB SEND / USB Keying (CW) / USB Keying (RTTY)
+  manual:
+    menu: MENU » SET > Connectors > USB SEND/Keying
+    value: OFF, OFF, OFF (defaults)
+  note: Icom's defaults, with PTT over CAT as the Nittany ARC runs it. HRD and K3CT do assign DTR/RTS lines
+    here, for CW and FSK keying from loggers; this profile doesn't need them. Icom warns a short SEND or
+    keying signal can occur when a USB cable is connected.
+  sources:
+  - S1
+  - S2
+  - S12
+  confidence: medium
+- id: civ-port
+  kind: manual
+  name: CI-V USB Port
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Port
+    value: Unlink from [REMOTE] (default)
+  note: The CI-V USB baud and echo settings only apply when unlinked. FB News (2017) used Link with 19200 bps.
+  sources:
+  - S1
+  - S7
+  - S10
+  - S11
+  confidence: high
+- id: civ-baud
+  kind: manual
+  name: CI-V USB Baud Rate
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Baud Rate
+    value: 115200 (default Auto); set the software to the same fixed rate
+  note: Nittany ARC runs 38400; Auto follows whatever the software uses.
+  sources:
+  - S1
+  - S7
+  - S10
+  - S11
+  confidence: high
+- id: civ-address
+  kind: manual
+  name: CI-V Address
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Address
+    value: 98h (default)
+  sources:
+  - S1
+  - S7
+  - S8
+  - S12
+  confidence: high
+- id: civ-transceive
+  kind: manual
+  name: CI-V Transceive
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V Transceive
+    value: OFF (default ON)
+  note: Stops unsolicited frequency and mode reports on the bus. HRD and K3CT both turn it off.
+  sources:
+  - S1
+  - S7
+  - S11
+  confidence: medium
+- id: civ-echo
+  kind: manual
+  name: CI-V USB Echo Back
+  manual:
+    menu: MENU » SET > Connectors > CI-V > CI-V USB Echo Back
+    value: OFF (default)
+  note: "Sources disagree: HRD uses ON (as does VA3QT on his IC-7300), K3CT OFF (ON only for DX4Win).
+    Hamlib 4.7 detects echo either way; match any software that asks (e.g. fldigi RigCat 'Commands are
+    Echoed')."
+  sources:
+  - S1
+  - S7
+  - S10
+  - S11
+  - S13
+  confidence: medium
+- id: tbw-data
+  kind: manual
+  name: TX bandwidth (SSB-D)
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > SSB-D > TBW
+    value: Check it covers your VARA bandwidth (choices 100–500 Hz low, 2500–2900 Hz high)
+  note: Farson reports firmware 1.11 made the data-mode TBW adjustable; the 2017 manual has it fixed at
+    300–2700 Hz. Path and choices are from Farson's description; no source checks it against VARA's 2750
+    Hz mode.
+  sources:
+  - S1
+  - S5
+  confidence: low
+software:
+- app: vara-hf
+  setting: Sound card
+  value: USB Audio CODEC (the radio)
+  note: '[S10]'
+- app: vara-hf
+  setting: Drive
+  value: adjust with USB MOD Level for no ALC
+  note: '[S10]'
+- app: pat
+  setting: Rig
+  value: rigctld -m 3078 (Hamlib IC-7610) on the radio's CI-V COM port
+  note: Model number from the Hamlib catalog [S13]; no IC-7610 Pat guide was found.
+notes: |-
+  Researched from Icom's IC-7610 manuals (2017 first editions), the V1.30 information sheet and CI-V reference, plus setup notes from Ham Radio Deluxe, FB News, VA7ST, VA3QT/W0KAH, K3CT and the Nittany ARC listed under Sources. Not yet confirmed on air by an openRMS user: check the step confidence. Written for firmware 1.30 or newer: by firmware 1.11 'Tone Control' had become 'Tone Control/TBW' with an SSB-D TBW (Farson), and 1.30 disables Tone Control in data mode [S5] [S3].
+
+  One cable to the rear [USB 1] port carries CI-V and audio. The radio shows two virtual COM ports, USB1 (A) and USB1 (B) [S2]; K3CT uses A for CAT [S11]. Data mode also locks out the speech compressor [S1]. The IC-7610 has two receivers; the manuals read here don't say which codec channel carries which band, so check receive audio on the Left channel first. VA7ST found Windows defaulting the codec's output to Mono, which cut transmit power until he selected Left [S9].
+
+  W0KAH (in VA3QT's document) ran Pactor through ACC on USB-D1 and sound-card modes on USB-D2, and found Winlink Express forcing USB-D1 and the narrowest filter on every frequency change [S10]. This profile puts USB on DATA1 MOD instead so whatever mode the software picks gets USB audio. Leave VA3QT's [TUNER] Auto, PTT Start and VOX suggestions out: profiles never key the radio.
+tags:
+- researched
+- unverified
+- winlink
+- emcomm
+sources:
+- id: S1
+  title: IC-7610 Basic Manual (2017 first edition, A7380D-1EX)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_manual.pdf
+  date: 2017-10
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1711/.
+- id: S2
+  title: IC-7610 Advanced Manual (2017 first edition, A7380-2EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_advanced_manual.pdf
+  date: 2017-11
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1718/.
+- id: S3
+  title: IC-7610 Version 1.30 information sheet
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7610_ENG_Info_V130_0a-en.pdf
+  date: 2021-04
+- id: S4
+  title: IC-7610 CI-V Reference Guide (command table)
+  author: Icom Inc. (via ManualsLib)
+  url: https://www.manualslib.com/manual/1339390/Icom-Ic-7610.html
+  note: Menu item names checked on pages 6-7 (1A 05 items 0062-0136).
+- id: S5
+  title: IC-7610 User Evaluation & Test Report (issue 8)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic7610/7610notes.pdf
+  date: 2020-11
+- id: S7
+  title: IC-7610 USB Setup Configuration
+  author: Ham Radio Deluxe Support
+  url: https://support.hamradiodeluxe.com/support/solutions/articles/51000083466-ic-7610-usb-setup-configuration
+  date: 2024-07
+  note: Date is the page's last modification.
+- id: S8
+  title: Let's operate FT8 with the newly announced IC-7610
+  author: FB News editorial staff
+  url: https://fbnews.jp/201712/technical_en/
+  date: 2017-12
+  note: Written before WSJT-X listed the IC-7610 (used the IC-785x entry and CI-V Link).
+- id: S9
+  title: Solving IC-7610 low TX audio for WSJT-X
+  author: VA7ST.ca
+  url: https://va7st.ca/2020/06/solving-ic-7610-low-tx-audio-for-wsjt-x
+  date: 2020-06
+- id: S10
+  title: IC-7300/7610 Winlink Set-Up v1.0 (IC-7610 section from W0KAH)
+  author: Ian Snow VA3QT (via winlink.org)
+  url: https://www.winlink.org/sites/default/files/RMSE_FORMS/ic-7300_7610_set-up.ver1_.0.pdf
+  date: 2020-08
+  note: Only the IC-7610 section and the CI-V items are used here; the rest is IC-7300.
+- id: S11
+  title: IC-7610 radio control, CW, voice and RTTY FSK configuration (N1MM Logger+)
+  author: K3CT
+  url: https://www.ure.es/wp-content/uploads/wpforo/default_attachments/1577470206-IC-7610_Config.pdf
+  date: 2018-02
+  note: Firmware 1.05.
+- id: S12
+  title: Icom IC-7610 (station guide)
+  author: Nittany Amateur Radio Club
+  url: https://nittany-amateur-radio-club.github.io/station/icom-ic-7610.html
+  date: 2026-05
+- id: S13
+  title: 'Hamlib 4.7 source: rigs/icom/icom.c and ic7610.c'
+  author: Hamlib project
+  url: https://github.com/Hamlib/Hamlib/tree/Hamlib-4.7/rigs/icom
+- id: S14
+  title: WSJT-X User Guide 2.7.0
+  author: Joe Taylor K1JT and the WSJT development group
+  url: https://wsjt.sourceforge.io/wsjtx-doc/wsjtx-main-2.7.0.html

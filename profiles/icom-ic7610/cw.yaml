@@ -1,0 +1,185 @@
+schema: openrms-rigs/profile/v1
+title: IC-7610 CW with paddles (semi break-in)
+summary: Icom's keyer defaults, which Farson found clean at the default 4 ms rise time, with break-in and
+  amplifier notes.
+rig:
+  macro: RIG_MODEL_IC7610
+  hamlib_model: 3078
+  mfg: Icom
+  name: IC-7610
+  firmware: '>=1.30'
+operation: cw
+connection: usb
+interface: paddle on the front [ELEC-KEY] jack
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: CW
+  passband_hz: 500
+  note: FIL2 is 500 Hz by default; Farson heard virtually no ringing at 250 Hz either.
+  sources:
+  - S1
+  - S5
+  confidence: high
+- id: key-type
+  kind: manual
+  name: Key type
+  manual:
+    menu: MENU » KEYER > EDIT/SET > CW-KEY SET > Key Type
+    value: Paddle (options Straight, Bug, Paddle)
+  note: "The 2017 Advanced manual describes this item as the key type for the rear [KEY] jack and prints
+    the default as ELEC-KEY; the CI-V guide lists Straight, Bug and Paddle. The front [ELEC-KEY] jack is
+    the electronic keyer input. Check which jack your paddle uses. Kept as a menu step: Hamlib 4.7
+    doesn't expose KEYERTYPE for the IC-7610."
+  sources:
+  - S1
+  - S2
+  - S4
+  confidence: low
+- id: polarity
+  kind: manual
+  name: Paddle polarity
+  manual:
+    menu: MENU » KEYER > EDIT/SET > CW-KEY SET > Paddle Polarity
+    value: Normal (right paddle = dash, default)
+  sources:
+  - S2
+  confidence: high
+- id: ratio
+  kind: manual
+  name: Dot/dash ratio
+  safety: tx
+  manual:
+    menu: … > CW-KEY SET > Dot/Dash Ratio
+    value: 1:1:3.0 (default)
+  sources:
+  - S2
+  confidence: high
+- id: rise
+  kind: manual
+  name: Rise time
+  safety: tx
+  manual:
+    menu: … > CW-KEY SET > Rise Time
+    value: 4 ms (default)
+  note: Choices 2, 4, 6, 8 ms. Farson heard no thumps at the default in full break-in at 24 wpm, and
+    measured keying sidebands at all four settings. At 48 wpm he saw trapezoidal elements at every
+    setting, with some rounding at the longer ones.
+  sources:
+  - S2
+  - S5
+  confidence: medium
+- id: sidetone
+  kind: manual
+  name: Side tone level
+  manual:
+    menu: … > CW-KEY SET > Side Tone Level
+    value: 50% (default)
+  sources:
+  - S2
+  confidence: high
+- id: break-in
+  kind: manual
+  name: Break-in
+  manual:
+    menu: Multi-function key group > BK-IN
+    value: BKIN (semi break-in); F-BKIN for full QSK
+  note: Farson found full break-in smooth at 24 wpm with fast receiver recovery. Profiles never switch
+    break-in automatically.
+  sources:
+  - S1
+  - S5
+  confidence: medium
+- id: tx-delay
+  kind: manual
+  name: TX Delay (with an amplifier)
+  safety: tx
+  manual:
+    menu: MENU » SET > Function > TX Delay > HF / 50M
+    value: OFF (default); add delay if an amplifier's relay is slower
+  note: 'Icom: set a delay when external equipment switches slower than the radio, to avoid reflected power.'
+  sources:
+  - S1
+  - S5
+  confidence: high
+- id: ip-plus
+  kind: manual
+  name: IP+
+  manual:
+    menu: Multi-function key group > IP+
+    value: OFF; on when strong signals overload the band
+  note: IP+ adds ADC dither for better IMD. Farson measured 3–4 dB worse MDS with it on and no preamp;
+    Sherwood measured about 2.5 dB and guesses it is usually not needed.
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: Multi-function key group > P.AMP
+    value: OFF on 7 MHz and below; P.AMP1 on higher HF; P.AMP2 mainly 50 MHz
+  note: 'Icom: P.AMP1 (about 12 dB) suits the HF low bands, P.AMP2 the higher bands. Farson advises no
+    preamp on 7 MHz and below and turning it off whenever OVF lights. While DIGI-SEL is on, P.AMP is
+    fixed OFF.'
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-7610 manuals (2017 first editions) and V1.30 information sheet, and the lab reports by Adam Farson VA7OJ and Rob Sherwood NC0B listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user. Menu paths follow firmware 1.11 and later ('Tone Control/TBW', per Farson and the 1.30 sheet) [S5] [S3].
+
+  The IC-7610 has an APF (Audio Peak Filter, SHARP or SOFT) on the APF/TPF key; Sherwood used it in a contest, but no source recommends a setting [S1] [S6]. CW pitch (300–900 Hz) and keyer speed (6–48 wpm) are personal choices. For CW keying from a logger over USB, K3CT assigns USB Keying (CW) to USB1 (A) DTR and HRD to USB1 (B) DTR [S11] [S7]; this profile uses the paddle and leaves those OFF.
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7610 Basic Manual (2017 first edition, A7380D-1EX)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_manual.pdf
+  date: 2017-10
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1711/.
+- id: S2
+  title: IC-7610 Advanced Manual (2017 first edition, A7380-2EX-1)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_advanced_manual.pdf
+  date: 2017-11
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1718/.
+- id: S3
+  title: IC-7610 Version 1.30 information sheet
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7610_ENG_Info_V130_0a-en.pdf
+  date: 2021-04
+- id: S4
+  title: IC-7610 CI-V Reference Guide (command table)
+  author: Icom Inc. (via ManualsLib)
+  url: https://www.manualslib.com/manual/1339390/Icom-Ic-7610.html
+  note: Menu item names checked on pages 6-7 (1A 05 items 0062-0136).
+- id: S5
+  title: IC-7610 User Evaluation & Test Report (issue 8)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic7610/7610notes.pdf
+  date: 2020-11
+- id: S6
+  title: 'Sherwood Engineering test results: Icom IC-7610'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/ab4oj/icom/ic7610/icom_ic7610_h.pdf
+  date: 2017-12
+- id: S7
+  title: IC-7610 USB Setup Configuration
+  author: Ham Radio Deluxe Support
+  url: https://support.hamradiodeluxe.com/support/solutions/articles/51000083466-ic-7610-usb-setup-configuration
+  date: 2024-07
+  note: Date is the page's last modification.
+- id: S11
+  title: IC-7610 radio control, CW, voice and RTTY FSK configuration (N1MM Logger+)
+  author: K3CT
+  url: https://www.ure.es/wp-content/uploads/wpforo/default_attachments/1577470206-IC-7610_Config.pdf
+  date: 2018-02
+  note: Firmware 1.05.

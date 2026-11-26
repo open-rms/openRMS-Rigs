@@ -1,0 +1,124 @@
+schema: openrms-rigs/profile/v1
+title: IC-7610 AM phone
+summary: AM within the radio's 25 W carrier limit, with Farson's receive filter and AGC observations.
+rig:
+  macro: RIG_MODEL_IC7610
+  hamlib_model: 3078
+  mfg: Icom
+  name: IC-7610
+  firmware: '>=1.30'
+operation: am
+connection: usb
+interface: stock HM-219 hand mic
+hamlib: '>=4.6'
+steps:
+- id: mode
+  kind: mode
+  name: MODE
+  value: AM
+  passband_hz: 0
+  sources:
+  - S1
+  confidence: high
+- id: agc
+  kind: level
+  name: AGC
+  menu:
+  - Multi-function key group
+  - AGC (touch to cycle FAST/MID/SLOW)
+  value: 5
+  display: MID
+  note: Farson found MID best for average to good signals and FAST better under rapid selective fading.
+  sources:
+  - S5
+  confidence: medium
+- id: carrier
+  kind: manual
+  name: Carrier power
+  safety: tx
+  manual:
+    menu: MULTI > RF POWER
+    value: 25 W maximum carrier (AM range 1–25 W)
+  note: "Kept as a menu step: how Hamlib's RFPOWER fraction maps to AM carrier isn't confirmed. Farson's AM
+    tests used 25 W carrier."
+  sources:
+  - S1
+  - S5
+  confidence: high
+- id: am-tone
+  kind: manual
+  name: AM TX Bass / Treble
+  safety: tx
+  manual:
+    menu: MENU » SET > Tone Control/TBW > TX > AM > TX Bass / TX Treble
+    value: 0 / 0 (default)
+  sources:
+  - S1
+  confidence: high
+- id: am-filter
+  kind: manual
+  name: Receive filter
+  manual:
+    menu: FILTER (FIL1/2/3 = 9 / 6 / 3 kHz)
+    value: FIL2 6 kHz
+  note: Farson found 6 kHz smoother and 9 kHz fuller; 3 kHz cut the highs.
+  sources:
+  - S1
+  - S5
+  confidence: low
+- id: ip-plus
+  kind: manual
+  name: IP+
+  manual:
+    menu: Multi-function key group > IP+
+    value: OFF; on when strong signals overload the band
+  note: IP+ adds ADC dither for better IMD. Farson measured 3–4 dB worse MDS with it on and no preamp;
+    Sherwood measured about 2.5 dB and guesses it is usually not needed.
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+- id: preamp
+  kind: manual
+  name: Preamp
+  manual:
+    menu: Multi-function key group > P.AMP
+    value: OFF on 7 MHz and below; P.AMP1 on higher HF; P.AMP2 mainly 50 MHz
+  note: 'Icom: P.AMP1 (about 12 dB) suits the HF low bands, P.AMP2 the higher bands. Farson advises no
+    preamp on 7 MHz and below and turning it off whenever OVF lights. While DIGI-SEL is on, P.AMP is
+    fixed OFF.'
+  sources:
+  - S1
+  - S5
+  - S6
+  confidence: medium
+notes: |-
+  Researched from Icom's IC-7610 manuals (2017 first editions) and V1.30 information sheet, and the lab reports by Adam Farson VA7OJ and Rob Sherwood NC0B listed under Sources. Many values are what a tester ran rather than a recommendation; check the step confidence. Not yet confirmed on air by an openRMS user. Menu paths follow firmware 1.11 and later ('Tone Control/TBW', per Farson and the 1.30 sheet) [S5] [S3].
+
+  TBW applies to SSB (and SSB-D), not AM [S1]. Farson found the manual notch (MN) distorts AM because it notches the carrier; use the auto notch instead. NR at 9–10 helped weak AM without distortion [S5].
+tags:
+- researched
+- unverified
+sources:
+- id: S1
+  title: IC-7610 Basic Manual (2017 first edition, A7380D-1EX)
+  author: Icom Inc.
+  url: https://rigpix.com/icom/ic7610_manual.pdf
+  date: 2017-10
+  note: Copy read from RigPix. Icom's current edition is at icomjapan.com/support/manual/1711/.
+- id: S3
+  title: IC-7610 Version 1.30 information sheet
+  author: Icom Inc.
+  url: https://icomfrance.com/uploads/files/produit/not-IC-7610_ENG_Info_V130_0a-en.pdf
+  date: 2021-04
+- id: S5
+  title: IC-7610 User Evaluation & Test Report (issue 8)
+  author: Adam Farson VA7OJ/AB4OJ
+  url: https://www.qsl.net/ab4oj/icom/ic7610/7610notes.pdf
+  date: 2020-11
+- id: S6
+  title: 'Sherwood Engineering test results: Icom IC-7610'
+  author: Rob Sherwood NC0B
+  url: https://www.qsl.net/ab4oj/icom/ic7610/icom_ic7610_h.pdf
+  date: 2017-12
